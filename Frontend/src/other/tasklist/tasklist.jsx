@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import {ToastContainer, toast} from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 
 const EmployeeTaskList = () => {
   const [tasks, setTasks] = useState([]);
@@ -47,11 +46,12 @@ const EmployeeTaskList = () => {
   };
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-4 ml-2 mt-10">My Tasks</h2>
+      <h2 className=" text-2xl font-bold mb-4 ml-2 mt-10">My Tasks</h2>
       {tasks.length === 0 ? (
         <p>No tasks assigned yet.</p>
       ) : (
-        <table border="1"  cellPadding="10" className="w-full border-2 border-gray-300 mt-6">
+       <div className="rounded-xl overflow-hidden border-2 border-amber-100 mt-6">
+        <table border="1"  cellPadding="10" className=" w-full mt-6">
           <thead>
             <tr>
               <th>Title</th>
@@ -65,7 +65,7 @@ const EmployeeTaskList = () => {
           </thead>
           <tbody className='text-center '>
             {tasks.map(task => (
-              <tr key={task._id} className='hover:bg-gray-200 h-15'>
+              <tr key={task._id} className='h-15'>
                 <td>{task.title}</td>
                 <td>{new Date(task.createdAt).toLocaleDateString()}</td>
                 <td>{new Date(task.dueDate).toLocaleDateString()}</td>
@@ -94,19 +94,9 @@ const EmployeeTaskList = () => {
             ))}
           </tbody>
         </table>
+       </div> 
       )}
-
-      {/* ✅ Toast container should always be at the root of the component */}
-      <ToastContainer
-        position="top-right"
-        autoClose={2000}
-        hideProgressBar={false}
-        newestOnTop={true}
-        closeOnClick
-        pauseOnHover
-        draggable
-        theme="colored"
-      />
+      
 
     </div>
   );

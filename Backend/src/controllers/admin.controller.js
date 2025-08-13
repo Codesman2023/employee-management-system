@@ -150,3 +150,45 @@ module.exports.getAllEmployees = async (req, res) => {
     res.status(500).json({ msg: 'Server error while fetching employees.' });
   }
 };
+
+/**
+ * Get all pending employees (status = 'pending')
+ */
+module.exports.getPendingEmployees = async (req, res) => {
+    try {
+        const pending = await require('../models/user.Employeemodel').find({ status: 'pending' }).select('-password');
+        res.status(200).json({ pending });
+    } catch (err) {
+        res.status(500).json({ msg: 'Error fetching pending employees' });
+    }
+}
+
+/**
+ * Approve an employee (set status to 'active')
+ */
+module.exports.approveEmployee = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const employeeModel = require('../models/user.Employeemodel');
+        const user = await employeeModel.findByIdAndUpdate(id, { status: 'active' }, { new: true }).select('-password');
+        if (!user) return res.status(404).json({ msg: 'Employee not found' });
+        res.status(200).json({ msg: 'Employee approved', user });
+    } catch (err) {
+        res.status(500).json({ msg: 'Error approving employee' });
+    }
+}
+
+/**
+ * Reject an employee (set status to 'rejected')
+ */
+module.exports.rejectEmployee = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const employeeModel = require('../models/user.Employeemodel');
+        const user = await employeeModel.findByIdAndUpdate(id, { status: 'rejected' }, { new: true }).select('-password');
+        if (!user) return res.status(404).json({ msg: 'Employee not found' });
+        res.status(200).json({ msg: 'Employee rejected', user });
+    } catch (err) {
+        res.status(500).json({ msg: 'Error rejecting employee' });
+    }
+}

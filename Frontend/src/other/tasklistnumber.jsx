@@ -38,19 +38,19 @@ const tasklistnumber = () => {
 
   return (
     <div className="flex mt-10 justify-between gap-5 ml-2 mr-2">
-      <div className="rounded-xl w-[40%] py-6 px-9 bg-red-400">
+      <div className="rounded-2xl w-[40%] py-6 px-9 bg-red-400">
         <h2 className="text-3xl font-semibold">{totalNew}</h2>
         <h3 className="text-xl font-medium">New Task</h3>
       </div>
-      <div className="rounded-xl w-[40%] py-6 px-9 bg-blue-400">
+      <div className="rounded-2xl w-[40%] py-6 px-9 bg-blue-400">
         <h2 className="text-3xl font-semibold">{totalCompleted}</h2>
         <h3 className="text-xl font-medium">Completed Task</h3>
       </div>
-      <div className="rounded-xl w-[40%] py-6 px-9 bg-green-400">
+      <div className="rounded-2xl w-[40%] py-6 px-9 bg-green-400">
         <h2 className="text-3xl font-semibold">{totalAccepted}</h2>
         <h3 className="text-xl font-medium">Accepted Task</h3>
       </div>
-      <div className="rounded-xl w-[40%] py-6 px-9 bg-yellow-400">
+      <div className="rounded-2xl w-[40%] py-6 px-9 bg-yellow-400">
         <h2 className="text-3xl font-semibold">{totalFailed}</h2>
         <h3 className="text-xl font-medium">Failed Task</h3>
       </div>

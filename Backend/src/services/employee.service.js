@@ -13,7 +13,8 @@ module.exports.createUser = async ({
             lastname
         },
         email,
-        password
+        password,
+        status: 'pending',  // explicitly mark as pending until admin approves
     })
 
     return user;

@@ -1,19 +1,41 @@
-import React from 'react'
-import {Link} from 'react-router-dom'
+import React from 'react';
+import { Link } from 'react-router-dom';
 
-const home = () => {
+const Home = () => {
   return (
-    <div className='bg-gray-500 h-screen flex flex-col justify-between '>
-        <header className='bg-gray-900 h-15 text-4xl font-medium pt-2 pl-2 text-white flex justify-center'>Emplyement Management System</header>
-        <div className='gap-8 items-center justify-cente flex flex-col '>
-            <button type="submit" className='bg-amber-300 h-20 w-60 rounded-2xl font-bold text-2xl cursor-pointer hover:bg-amber-200'><Link to='/EmployeeLogin'>Login as Employee</Link></button>
-            <button type="submit" className='bg-red-500 h-20 w-60 rounded-2xl font-bold text-2xl cursor-pointer hover:bg-red-300'><Link to='/AdminLogin'>Login as Admin</Link></button>
+    <div className="h-screen bg-gradient-to-l from-gray-900 via-gray-300 to-black text-white flex flex-col">
+      {/* Header */}
+      <header className="text-4xl font-bold py-6 text-center tracking-wide shadow-md">
+        Employment Management System
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-grow flex flex-col items-center justify-center space-y-10">
+        <p className="text-xl md:text-2xl text-center max-w-2xl px-4">
+          Welcome to the Employment Management System. Choose your portal to get started.
+        </p>
+
+        <div className="flex flex-col md:flex-row gap-6">
+          <Link to="/EmployeeLogin">
+            <button className="bg-yellow-400 text-black hover:bg-yellow-300 transition duration-300 ease-in-out px-8 py-4 rounded-2xl text-xl font-semibold shadow-lg hover:scale-105">
+              Login as Employee
+            </button>
+          </Link>
+
+          <Link to="/AdminLogin">
+            <button className="bg-red-500 hover:bg-red-400 transition duration-300 ease-in-out px-8 py-4 rounded-2xl text-xl font-semibold shadow-lg hover:scale-105">
+              Login as Admin
+            </button>
+          </Link>
         </div>
-        <footer className="bg-gray-950 text-gray-300 text-center py-3 shadow-inner">
-        &copy; {new Date().getFullYear()} Employement Management System. All rights reserved.
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-gray-950 text-gray-400 text-center py-3 shadow-inner">
+        &copy; {new Date().getFullYear()} Employment Management System. All rights reserved.
       </footer>
     </div>
-  )
-}
+  );
+};
 
-export default home
+export default Home;

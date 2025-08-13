@@ -32,11 +32,11 @@ const AdminHeader = () => {
 
   return (
     <div className='flex items-end justify-between'>
-      <h1 className='text-3xl text-gray-600 font-medium ml-5 mt-2'>
-        Hello <br />
-        <span className='text-4xl mask-conic-from-neutral-900'>{adminName || 'Admin'}</span>
+      <h1 className='text-3xl text-gray-200 font-medium ml-5 mt-2'>
+        Hello, <br />
+        <span className='text-4xl'>{adminName || 'Admin'}</span>
       </h1>
-      <button onClick={handleLogout} type="submit" className='bg-red-600 text-lg font-medium text-white px-3 py-2 rounded-xl mr-5 cursor-pointer hover:bg-red-700'>Log out</button>
+      <button onClick={handleLogout} type="submit" className='self-center bg-red-600 text-lg font-medium text-white px-3 py-2 rounded-xl mr-5 cursor-pointer hover:bg-red-700'>Log out</button>
     </div>
   )
 }

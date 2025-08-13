@@ -69,7 +69,7 @@ const CreateTask = () => {
       >
         <div className="w-1/2">
           <div>
-            <h3 className="text-sm text-black mb-0.5 font-medium">Task Title</h3>
+            <h3 className="text-sm mb-0.5 font-medium">Task Title</h3>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -80,7 +80,7 @@ const CreateTask = () => {
           </div>
 
           <div>
-            <h3 className="text-sm text-black mb-0.5 font-medium">Due Date</h3>
+            <h3 className="text-sm mb-0.5 font-medium">Due Date</h3>
             <input
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
@@ -90,17 +90,17 @@ const CreateTask = () => {
           </div>
 
           <div>
-            <h3 className="text-sm text-black mb-0.5 font-medium">Assign to</h3>
+            <h3 className="text-sm mb-0.5 font-medium">Assign to</h3>
             <select
               onChange={(e) => setAssignedTo(e.target.value)}
               value={assignedTo}
               className="text-sm py-1 px-2 w-4/5 rounded outline-none bg-transparent border-[1px] border-emerald-500 mb-4"
             >
-              <option value="" className="bg-green-300">
+              <option value="" className="bg-emerald-700">
                 Select Employee
               </option>
               {employees.map((emp) => (
-                <option key={emp._id} value={emp._id} className="bg-green-100">
+                <option key={emp._id} value={emp._id} className="bg-emerald-500">
                   {emp.fullname.firstname} {emp.fullname.lastname}
                 </option>
               ))}
@@ -108,7 +108,7 @@ const CreateTask = () => {
           </div>
 
           <div>
-            <h3 className="text-sm text-black mb-0.5 font-medium">Category</h3>
+            <h3 className="text-sm mb-0.5 font-medium">Category</h3>
             <input
               value={category}
               onChange={(e) => setCategory(e.target.value)}
@@ -120,7 +120,7 @@ const CreateTask = () => {
         </div>
 
         <div className="w-2/5 flex flex-col items-start">
-          <h3 className="text-sm text-black mb-0.5 font-medium">Description</h3>
+          <h3 className="text-sm mb-0.5 font-medium">Description</h3>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}

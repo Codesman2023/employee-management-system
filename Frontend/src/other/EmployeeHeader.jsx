@@ -32,10 +32,10 @@ const EmployeeHeader = () => {
   return (
     <div className='flex items-end justify-between'>
       <h1 className='text-2xl font-medium ml-5 mt-2'>
-        Hello <br />
+        Hello, <br />
         <span className='text-3xl font-semibold'>{employeeName || 'Employee'}</span>
       </h1>
-      <button onClick={handleLogout} type="submit" className='bg-red-600 text-lg font-medium text-white px-3 py-2 rounded-xl mr-5 cursor-pointer hover:bg-red-700'>Log out</button>
+      <button onClick={handleLogout} type="submit" className='self-center bg-red-600 text-lg font-medium text-white px-3 py-2 rounded-xl mr-5 cursor-pointer hover:bg-red-700'>Log out</button>
     </div>
   )
 }
