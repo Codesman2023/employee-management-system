@@ -5,35 +5,6 @@ import { UserDataContext } from "../context/UserContext";
 import { FaHome } from "react-icons/fa";
 import { motion } from "framer-motion";
 
-const container = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.08 } },
-};
-
-const headerVariant = {
-  hidden: { y: -18, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: { type: "spring", stiffness: 150, damping: 18 },
-  },
-};
-
-const cardVariant = {
-  hidden: { opacity: 0, scale: 0.98, y: 8 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: { type: "spring", stiffness: 140, damping: 16 },
-  },
-};
-
-const inputVariant = {
-  focus: { scale: 1.01, boxShadow: "0 6px 18px rgba(0,0,0,0.12)" },
-  rest: { scale: 1, boxShadow: "none" },
-};
-
 export default function UserSignup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
