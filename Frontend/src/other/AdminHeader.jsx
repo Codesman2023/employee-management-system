@@ -15,8 +15,11 @@ const AdminHeader = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         )
         // Adjust according to your backend response structure
-        if (res.data && res.data.user && res.data.user.fullname) {
-          setAdminName(`${res.data.user.fullname.firstname} ${res.data.user.fullname.lastname}`)
+        if (res.data && res.data.user) {
+          const usr = res.data.user;
+          if (usr.name) setAdminName(usr.name);
+          else if (usr.fullname) setAdminName(`${usr.fullname.firstname} ${usr.fullname.lastname}`);
+          else setAdminName(usr.email || '');
         }
       } catch (err) {
         setAdminName('')

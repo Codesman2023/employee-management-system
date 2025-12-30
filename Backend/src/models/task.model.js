@@ -1,5 +1,3 @@
-// Backend/src/models/task.model.js
-
 const mongoose = require('mongoose');
 
 const taskSchema = new mongoose.Schema({
@@ -8,33 +6,65 @@ const taskSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+
   description: {
     type: String,
     trim: true
   },
+
   assignedTo: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Employee', // Make sure this matches your employee model name!
+    ref: 'Employee',
     required: true
   },
+
   status: {
     type: String,
-    enum: ['pending', 'in-progress', 'completed', 'failed'],
+    enum: ['pending', 'in-progress', 'under-review', 'completed', 'failed'],
     default: 'pending'
   },
+
+  priority: {
+    type: String,
+    enum: ['low', 'medium', 'high', 'critical'],
+    default: 'medium'
+  },
+
   dueDate: {
     type: Date,
     required: true
   },
+
   category: {
     type: String,
     required: true,
     trim: true
   },
-  createdAt: {
-    type: Date,
-    default: Date.now
+
+  completedAt: {
+    type: Date
+  },
+
+  // ⭐ NEW — Links Admin or Employee can add
+  links: [
+    {
+      url: String,
+      addedBy: {
+        type: String,
+        enum: ["admin", "employee"]
+      },
+      addedAt: { type: Date, default: Date.now }
+    }
+  ]
+
+}, { timestamps: true });
+
+// Auto add completedAt
+taskSchema.pre('save', function(next) {
+  if (this.isModified('status') && this.status === 'completed') {
+    this.completedAt = new Date();
   }
+  next();
 });
 
 module.exports = mongoose.model('Task', taskSchema);

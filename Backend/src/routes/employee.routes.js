@@ -31,5 +31,9 @@ router.get('/tasks', authMiddleware.authUser, userController.getMyTasks);
 
 router.put('/tasks/:id', authMiddleware.authUser, userController.updateMyTaskStatus);
 
+router.put('/change-password', authMiddleware.authUser, [
+    body('oldPassword').notEmpty().withMessage('Old password is required.'),
+    body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters long.')
+] ,userController.changePassword);
 
 module.exports = router;

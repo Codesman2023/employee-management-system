@@ -45,7 +45,7 @@ export default function UserSignup() {
     <div className="flex flex-col h-screen bg-gradient-to-r from-slate-800 via-slate-900 to-black text-white">
       <header className="w-full absolute top-0 left-0 p-4 bg-yellow-500 text-white shadow-md flex items-center justify-between px-6">
         <Link
-          to="/home"
+          to="/"
           className="text-white text-xl md:text-2xl hover:text-gray-200 transition"
         >
           <FaHome className="text-3xl" />

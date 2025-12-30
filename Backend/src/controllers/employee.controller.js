@@ -4,6 +4,29 @@ const { validationResult } = require('express-validator');
 const blackListTokenModel = require('../models/blacklistToken.model');
 const Task = require('../models/task.model');
 
+
+module.exports.getEmployeeProfileSelf = async (req, res) => {
+  try {
+    const employee = await userModel.findById(req.user._id).select("-password");
+
+    if (!employee) {
+      return res.status(404).json({ message: "Employee not found" });
+    }
+
+    if (employee.status === "inactive") {
+      return res.status(403).json({
+        message: "Your account is deactivated. Contact Admin."
+      });
+    }
+
+    res.status(200).json({ employee });
+
+  } catch (err) {
+    res.status(500).json({ message: "Server Error", err });
+  }
+};
+
+
 module.exports.registerUser = async (req, res, next) => {  
 
     const errors = validationResult(req);
@@ -108,3 +131,39 @@ module.exports.updateMyTaskStatus = async (req, res) => {
 
   res.status(200).json({ msg: 'Status updated', task });
 };
+
+module.exports.changePassword = async (req, res) => {
+  try {
+    const employeeId = req.user.id;   // from auth middleware
+    const { oldPassword, newPassword } = req.body;
+
+    if(!oldPassword || !newPassword){
+      return res.status(400).json({ msg: "All fields are required" });
+    }
+
+    const employee = await Employee.findById(employeeId).select("+password");
+
+    if (!employee) {
+      return res.status(404).json({ msg: "Employee not found" });
+    }
+
+    // check old password
+    const isMatch = await bcrypt.compare(oldPassword, employee.password);
+    if (!isMatch) {
+      return res.status(400).json({ msg: "Old password is incorrect" });
+    }
+
+    // hash new password
+    const salt = await bcrypt.genSalt(10);
+    employee.password = await bcrypt.hash(newPassword, salt);
+
+    await employee.save();
+
+    res.json({ msg: "Password changed successfully" });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
+

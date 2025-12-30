@@ -35,4 +35,18 @@ router.get('/tasks', authMiddleware.authUser, userController.getAllTasks);
 
 router.get('/employees', authMiddleware.authUser, userController.getAllEmployees);
 
+router.post('/create-employee', authMiddleware.authUser, userController.createEmployee);
+
+router.get('/employees-list', authMiddleware.authUser, userController.getAllEmployees);
+
+router.put('/update-employees/:id', authMiddleware.authUser, userController.updateEmployee);
+
+router.delete('/delete-employees/:id', authMiddleware.authUser, userController.deleteEmployee);
+
+router.get('/employee/:id', authMiddleware.authUser, userController.getEmployeeProfile);
+
+router.put('/restore-employee/:id', authMiddleware.authUser, userController.restoreEmployee);
+
+router.delete('/permanent-delete-employee/:id', authMiddleware.authUser, userController.permanentDeleteEmployee);
+
 module.exports = router;

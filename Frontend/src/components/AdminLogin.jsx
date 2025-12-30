@@ -58,7 +58,7 @@ export default function AdminLogin() {
   <>
         <div className="flex flex-col h-screen bg-gradient-to-r from-slate-800 via-slate-900 to-black text-white">
           <header className="w-full absolute top-0 left-0 p-4 bg-yellow-500 text-white shadow-md flex items-center justify-between px-6">
-            <Link to="/home" className="text-white text-xl md:text-2xl hover:text-gray-200 transition">
+            <Link to="/" className="text-white text-xl md:text-2xl hover:text-gray-200 transition">
               <FaHome className="text-3xl" />
             </Link>
             <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2">

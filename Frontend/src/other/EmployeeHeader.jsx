@@ -14,28 +14,22 @@ const EmployeeHeader = () => {
           `${import.meta.env.VITE_BASE_URL}/employees/profile`,
           { headers: { Authorization: `Bearer ${token}` } }
         )
-        if (res.data && res.data.user && res.data.user.fullname) {
-          setEmployeeName(`${res.data.user.fullname.firstname} ${res.data.user.fullname.lastname}`)
+        if (res.data && res.data.user) {
+          const user = res.data.user;
+          const name = user.name || (user.fullname ? `${user.fullname.firstname} ${user.fullname.lastname}` : user.email);
+          setEmployeeName(name);
         }
-      } catch (err) {
-        setEmployeeName('')
-      }
+      } catch {}
     }
     fetchEmployee()
   }, [])
 
-  function handleLogout() {
-    localStorage.removeItem('token')
-    navigate('/EmployeeLogin');
-  }
-
   return (
-    <div className='flex items-end justify-between'>
-      <h1 className='text-2xl font-medium ml-5 mt-2'>
+    <div className="flex items-center justify-between w-full">
+      <h1 className="text-2xl font-medium">
         Hello, <br />
-        <span className='text-3xl font-semibold'>{employeeName || 'Employee'}</span>
+        <span className="text-3xl font-semibold text-blue-300">{employeeName || 'Employee'}</span>
       </h1>
-      <button onClick={handleLogout} type="submit" className='self-center bg-red-600 text-lg font-medium text-white px-3 py-2 rounded-xl mr-5 cursor-pointer hover:bg-red-700'>Log out</button>
     </div>
   )
 }

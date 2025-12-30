@@ -8,7 +8,11 @@ const CreateTask = () => {
   const [dueDate, setDueDate] = useState("");
   const [assignedTo, setAssignedTo] = useState("");
   const [category, setCategory] = useState("");
+  const [priority, setPriority] = useState("medium");
   const [description, setDescription] = useState("");
+
+  const [taskLinks, setTaskLinks] = useState([""]);
+
   const [employees, setEmployees] = useState([]);
 
   useEffect(() => {
@@ -21,7 +25,6 @@ const CreateTask = () => {
         );
         setEmployees(res.data.employees);
       } catch (error) {
-        console.error("Error fetching employees:", error);
         toast.error("Failed to fetch employees!");
       }
     };
@@ -31,6 +34,11 @@ const CreateTask = () => {
 
   const handleCreateTask = async (e) => {
     e.preventDefault();
+
+    if (!title || !dueDate || !assignedTo || !category) {
+      toast.error("Please fill all required fields!");
+      return;
+    }
 
     try {
       const token = localStorage.getItem("token");
@@ -43,21 +51,31 @@ const CreateTask = () => {
           assignedTo,
           category,
           description,
+          priority,
+
+          // ⭐ send valid links only
+          links: taskLinks
+            .filter(link => link.trim() !== "")
+            .map(link => ({
+              url: link,
+              addedBy: "admin"
+            }))
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       toast.success(response.data.msg || "Task created successfully!");
 
-      // Clear form
       setTitle("");
       setDueDate("");
       setAssignedTo("");
       setCategory("");
       setDescription("");
+      setPriority("medium");
+      setTaskLinks([""]);
+
     } catch (error) {
-      console.error(error);
-      toast.error("Error creating task.");
+      toast.error(error.response?.data?.msg || "Error creating task.");
     }
   };
 
@@ -68,12 +86,13 @@ const CreateTask = () => {
         className="flex flex-wrap w-full items-start justify-between"
       >
         <div className="w-1/2">
+
           <div>
             <h3 className="text-sm mb-0.5 font-medium">Task Title</h3>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="text-sm py-1 px-2 w-4/5 rounded outline-none bg-transparent border-[1px] border-emerald-500 mb-4"
+              className="text-sm py-1 px-2 w-4/5 rounded outline-none bg-transparent border border-emerald-500 mb-4"
               type="text"
               placeholder="Make a UI design"
             />
@@ -84,7 +103,7 @@ const CreateTask = () => {
             <input
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="text-sm py-1 px-2 w-4/5 rounded outline-none bg-transparent border-[1px] border-emerald-500 mb-4"
+              className="text-sm py-1 px-2 w-4/5 rounded outline-none bg-transparent border border-emerald-500 mb-4"
               type="date"
             />
           </div>
@@ -94,16 +113,29 @@ const CreateTask = () => {
             <select
               onChange={(e) => setAssignedTo(e.target.value)}
               value={assignedTo}
-              className="text-sm py-1 px-2 w-4/5 rounded outline-none bg-transparent border-[1px] border-emerald-500 mb-4"
+              className="text-sm py-1 px-2 w-4/5 rounded outline-none bg-gray-600 border border-emerald-500 mb-4"
             >
-              <option value="" className="bg-emerald-700">
-                Select Employee
-              </option>
+              <option value="">Select Employee</option>
+
               {employees.map((emp) => (
-                <option key={emp._id} value={emp._id} className="bg-emerald-500">
-                  {emp.fullname.firstname} {emp.fullname.lastname}
+                <option key={emp._id} value={emp._id} className="bg-black">
+                  {emp.name}
                 </option>
               ))}
+            </select>
+          </div>
+
+          <div>
+            <h3 className="text-sm mb-0.5 font-medium">Priority</h3>
+            <select
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
+              className="text-sm py-1 px-2 w-4/5 rounded outline-none bg-gray-600 border border-emerald-500 mb-4"
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="critical">Critical</option>
             </select>
           </div>
 
@@ -112,36 +144,56 @@ const CreateTask = () => {
             <input
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="text-sm py-1 px-2 w-4/5 rounded outline-none bg-transparent border-[1px] border-emerald-500 mb-4"
+              className="text-sm py-1 px-2 w-4/5 rounded outline-none bg-transparent border border-emerald-500 mb-4"
               type="text"
               placeholder="design, dev, etc"
             />
           </div>
+
+          {/* ⭐ Links Section */}
+          <div>
+            <h3 className="text-sm mb-1 font-medium">Reference Links</h3>
+
+            {taskLinks.map((link, idx) => (
+              <input
+                key={idx}
+                value={link}
+                onChange={(e) => {
+                  const arr = [...taskLinks];
+                  arr[idx] = e.target.value;
+                  setTaskLinks(arr);
+                }}
+                placeholder="https://github.com/... or docs link"
+                className="text-sm py-1 px-2 w-4/5 rounded outline-none bg-transparent border border-emerald-500 mb-2"
+              />
+            ))}
+
+            <button
+              type="button"
+              onClick={() => setTaskLinks([...taskLinks, ""])}
+              className="text-xs text-blue-400"
+            >
+              + Add More Link
+            </button>
+          </div>
         </div>
 
+        {/* Right Side */}
         <div className="w-2/5 flex flex-col items-start">
           <h3 className="text-sm mb-0.5 font-medium">Description</h3>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full h-44 text-sm py-2 px-4 rounded outline-none bg-transparent border-[1px] border-emerald-500"
-          ></textarea>
+            className="w-full h-44 text-sm py-2 px-4 rounded outline-none bg-transparent border border-emerald-500"
+          />
+
           <button className="bg-emerald-500 py-3 hover:bg-emerald-600 px-5 rounded text-sm mt-4 w-full">
             Create Task
           </button>
         </div>
       </form>
 
-      {/* ✅ Toast Container */}
-      <ToastContainer
-        position="top-right"
-        autoClose={2500}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        pauseOnHover
-        theme="colored"
-      />
+      <ToastContainer position="top-right" autoClose={2500} theme="colored" />
     </div>
   );
 };

@@ -15,7 +15,7 @@ const UserProtectWrapper = ({
 
     useEffect(() => {
         if (!token) {
-            navigate('/login')
+            navigate('/AdminLogin')
         }
 
         axios.get(`${import.meta.env.VITE_BASE_URL}/admins/profile`, {
@@ -31,7 +31,7 @@ const UserProtectWrapper = ({
             .catch(err => {
                 console.log(err)
                 localStorage.removeItem('token')
-                navigate('/login')
+                navigate('/AdminLogin')
             })
     }, [ token ])
 

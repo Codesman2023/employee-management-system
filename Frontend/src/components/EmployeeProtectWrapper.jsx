@@ -15,7 +15,7 @@ const UserProtectWrapper = ({
 
     useEffect(() => {
         if (!token) {
-            navigate('/login')
+            navigate('/EmployeeLogin')
         }
 
         axios.get(`${import.meta.env.VITE_BASE_URL}/employees/profile`, {
@@ -24,14 +24,15 @@ const UserProtectWrapper = ({
             }
         }).then(response => {
             if (response.status === 200) {
-                setUser(response.data)
+                // backend returns profile under `user`
+                setUser(response.data.user)
                 setIsLoading(false)
             }
         })
             .catch(err => {
                 console.log(err)
                 localStorage.removeItem('token')
-                navigate('/login')
+                navigate('/EmployeeLogin')
             })
     }, [ token ])
 
