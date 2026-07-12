@@ -7,6 +7,7 @@ const adminAuth = require('../middlewares/AdminAuth.middleware');
 router.post('/clock-in', authMiddleware.authUser, attendanceController.clockIn);
 router.post('/clock-out', authMiddleware.authUser, attendanceController.clockOut);
 router.get('/today', authMiddleware.authUser, attendanceController.getTodayAttendance);
+router.get('/history', authMiddleware.authUser, attendanceController.getAttendanceHistory);
 
 // Admin-only: list all attendance records
 router.get('/all', adminAuth.authUser, attendanceController.getAllAttendance);

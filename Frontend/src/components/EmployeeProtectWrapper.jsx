@@ -10,12 +10,12 @@ const UserProtectWrapper = ({
 }) => {
     const token = localStorage.getItem('token')
     const navigate = useNavigate()
-    const { user, setUser } = useContext(UserDataContext)
+    const { setUser } = useContext(UserDataContext)
     const [ isLoading, setIsLoading ] = useState(true)
 
     useEffect(() => {
         if (!token) {
-            navigate('/EmployeeLogin')
+            navigate('/login')
         }
 
         axios.get(`${import.meta.env.VITE_BASE_URL}/employees/profile`, {
@@ -32,7 +32,7 @@ const UserProtectWrapper = ({
             .catch(err => {
                 console.log(err)
                 localStorage.removeItem('token')
-                navigate('/EmployeeLogin')
+                navigate('/login')
             })
     }, [ token ])
 

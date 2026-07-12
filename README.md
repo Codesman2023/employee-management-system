@@ -91,9 +91,8 @@ Some flows may also set a `token` cookie on login.
 
 | Endpoint | Method | Description | Request Body | Success | Error Status |
 |---|---|---|---|---|---|
-| `/admins/Admin-login` | POST | Admin login | `{ email, password }` | 200 | 400, 401 |
+| `/auth/login` | POST | Unified admin/employee login | `{ email, password }` | 200 | 400, 401, 403 |
 | `/admins/profile` | GET | Get admin profile | - | 200 | 401 |
-| `/employees/Employee-login` | POST | Employee login | `{ email, password }` | 200 | 400, 401 |
 | `/employees/profile` | GET | Get employee profile | - | 200 | 401 |
 
 ### Task Management

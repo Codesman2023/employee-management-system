@@ -1,13 +1,20 @@
 const Attendance = require("../models/attendance.model");
 
+const getStatusLabel = (record) => {
+  if (!record) return "Not Marked";
+  if (record.clockOut) return "Completed";
+  if (record.clockIn) return "Present";
+  return "Not Marked";
+};
+
 module.exports.clockIn = async (req, res) => {
   try {
-    const employeeId = req.user.id;   // from auth middleware
+    const employeeId = req.user.id;
     const today = new Date().toISOString().split("T")[0];
 
     const already = await Attendance.findOne({
       employee: employeeId,
-      date: today
+      date: today,
     });
 
     if (already) {
@@ -17,11 +24,10 @@ module.exports.clockIn = async (req, res) => {
     await Attendance.create({
       employee: employeeId,
       date: today,
-      clockIn: new Date()
+      clockIn: new Date(),
     });
 
     res.json({ msg: "Clock In successful" });
-
   } catch (err) {
     console.log(err);
     res.status(500).json({ msg: "Server error" });
@@ -35,7 +41,7 @@ module.exports.clockOut = async (req, res) => {
 
     const attendance = await Attendance.findOne({
       employee: employeeId,
-      date: today
+      date: today,
     });
 
     if (!attendance) {
@@ -51,15 +57,14 @@ module.exports.clockOut = async (req, res) => {
     const hours = workedMs / (1000 * 60 * 60);
 
     attendance.clockOut = now;
-    attendance.totalHours = hours.toFixed(2);
+    attendance.totalHours = Number(hours.toFixed(2));
 
     await attendance.save();
 
     res.json({
       msg: "Clock Out successful",
-      hours: attendance.totalHours
+      hours: attendance.totalHours,
     });
-
   } catch (err) {
     console.log(err);
     res.status(500).json({ msg: "Server error" });
@@ -73,11 +78,37 @@ module.exports.getTodayAttendance = async (req, res) => {
 
     const attendance = await Attendance.findOne({
       employee: employeeId,
-      date: today
+      date: today,
     });
 
-    res.json(attendance);
+    if (!attendance) {
+      return res.json(null);
+    }
 
+    res.json({
+      ...attendance.toObject(),
+      status: getStatusLabel(attendance),
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
+
+module.exports.getAttendanceHistory = async (req, res) => {
+  try {
+    const employeeId = req.user.id;
+
+    const records = await Attendance.find({ employee: employeeId })
+      .sort({ date: -1 })
+      .limit(10);
+
+    const attendance = records.map((record) => ({
+      ...record.toObject(),
+      status: getStatusLabel(record),
+    }));
+
+    res.json({ attendance });
   } catch (err) {
     console.log(err);
     res.status(500).json({ msg: "Server error" });
@@ -91,7 +122,6 @@ module.exports.getAllAttendance = async (req, res) => {
       .sort({ date: -1 });
 
     res.json({ attendance: records });
-
   } catch (err) {
     console.log(err);
     res.status(500).json({ msg: "Server error" });

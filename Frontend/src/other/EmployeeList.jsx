@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useMemo, useState, useContext } from "react";
 import axios from "axios";
 import { UserDataContext } from "../context/UserContext";
 import { useNavigate } from "react-router-dom";
@@ -8,12 +8,17 @@ const EmployeeList = () => {
   const [employees, setEmployees] = useState([]);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({});
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [resendingId, setResendingId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [departmentFilter, setDepartmentFilter] = useState("all");
   const navigate = useNavigate();
 
   const fetchEmployees = async () => {
     try {
       const token = adminToken || localStorage.getItem("token");
-      if (!token) return navigate("/AdminLogin");
+      if (!token) return navigate("/login");
 
       const res = await axios.get(
         `${import.meta.env.VITE_BASE_URL}/admins/employees-list`,
@@ -24,7 +29,7 @@ const EmployeeList = () => {
     } catch (err) {
       if (err?.response?.status === 401) {
         localStorage.removeItem("token");
-        navigate("/AdminLogin");
+        navigate("/login");
       }
     }
   };
@@ -33,11 +38,36 @@ const EmployeeList = () => {
 
   const secureToken = () => adminToken || localStorage.getItem("token");
 
+  const departments = useMemo(() => {
+    const departmentNames = employees
+      .map((emp) => emp.department?.trim())
+      .filter(Boolean);
+
+    return [...new Set(departmentNames)].sort((a, b) => a.localeCompare(b));
+  }, [employees]);
+
+  const filteredEmployees = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    return employees.filter((emp) => {
+      const matchesSearch =
+        !normalizedSearch ||
+        emp.name?.toLowerCase().includes(normalizedSearch) ||
+        emp.email?.toLowerCase().includes(normalizedSearch);
+
+      const matchesDepartment =
+        departmentFilter === "all" ||
+        emp.department?.trim().toLowerCase() === departmentFilter.toLowerCase();
+
+      return matchesSearch && matchesDepartment;
+    });
+  }, [employees, searchTerm, departmentFilter]);
+
   const handleDelete = async (id) => {
     if (!window.confirm("Deactivate this employee?")) return;
     try {
       const token = secureToken();
-      if (!token) return navigate("/AdminLogin");
+      if (!token) return navigate("/login");
 
       await axios.delete(
         `${import.meta.env.VITE_BASE_URL}/admins/delete-employees/${id}`,
@@ -45,13 +75,15 @@ const EmployeeList = () => {
       );
 
       fetchEmployees();
-    } catch (err) {}
+    } catch (err) {
+      setError(err?.response?.data?.message || "Unable to deactivate employee");
+    }
   };
 
   const handleUpdate = async (id) => {
     try {
       const token = secureToken();
-      if (!token) return navigate("/AdminLogin");
+      if (!token) return navigate("/login");
 
       const targetId = id || editing;
       await axios.put(
@@ -63,7 +95,9 @@ const EmployeeList = () => {
       setEditing(null);
       setForm({});
       fetchEmployees();
-    } catch (err) {}
+    } catch (err) {
+      setError(err?.response?.data?.message || "Unable to update employee");
+    }
   };
 
   const handleRestore = async (id) => {
@@ -76,11 +110,36 @@ const EmployeeList = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       fetchEmployees();
-    } catch (err) {}
+    } catch (err) {
+      setError(err?.response?.data?.message || "Unable to restore employee");
+    }
+  };
+
+  const handleResendInvitation = async (id) => {
+    try {
+      setMessage("");
+      setError("");
+      setResendingId(id);
+      const token = secureToken();
+      if (!token) return navigate("/login");
+
+      const res = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/admins/employees/${id}/resend-invitation`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setMessage(res.data.message || "Invitation email resent");
+      fetchEmployees();
+    } catch (err) {
+      setError(err?.response?.data?.message || "Unable to resend invitation");
+    } finally {
+      setResendingId(null);
+    }
   };
 
   const handlePermanentDelete = async (id) => {
-    if (!window.confirm("⚠ Permanently delete employee?")) return;
+    if (!window.confirm("Permanently delete employee?")) return;
     try {
       const token = secureToken();
       await axios.delete(
@@ -88,32 +147,67 @@ const EmployeeList = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       fetchEmployees();
-    } catch (err) {}
+    } catch (err) {
+      setError(err?.response?.data?.message || "Unable to delete employee");
+    }
   };
 
   return (
     <div className="w-full min-h-screen flex justify-center py-10 
-      bg-gradient-to-br from-gray-800 via-gray-900 to-gray-700 text-gray-200">
+       from-gray-800 via-gray-900 to-gray-700 text-gray-200">
 
       <div className="w-[96%] backdrop-blur-xl bg-[#0f172a]/60 
       border border-gray-500 shadow-2xl rounded-2xl p-8">
 
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col gap-4 mb-6 lg:flex-row lg:items-center lg:justify-between">
           <h2 className="text-3xl font-extrabold tracking-wide text-white">
             Employee Management
           </h2>
 
-          <button
-            onClick={() => navigate("/admin/add-employee")}
-            className="px-5 py-2 rounded-lg font-semibold 
-            bg-emerald-600 hover:bg-emerald-700 transition shadow-xl"
-          >
-            ➕ Add Employee
-          </button>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <input
+              type="search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by name or email"
+              className="w-full rounded-lg border border-gray-600 bg-gray-950/70 px-4 py-2 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-blue-500 sm:w-72"
+            />
+
+            <select
+              value={departmentFilter}
+              onChange={(e) => setDepartmentFilter(e.target.value)}
+              className="w-full rounded-lg border border-gray-600 bg-gray-950/70 px-4 py-2 text-sm text-white outline-none transition focus:border-blue-500 sm:w-56"
+            >
+              <option value="all">All departments</option>
+              {departments.map((department) => (
+                <option key={department} value={department}>
+                  {department}
+                </option>
+              ))}
+            </select>
+
+            <button
+              onClick={() => navigate("/admin/add-employee")}
+              className="px-5 py-2 rounded-lg font-semibold 
+              bg-emerald-600 hover:bg-emerald-700 transition shadow-xl"
+            >
+              Add Employee
+            </button>
+          </div>
         </div>
 
-        {/* Table */}
+        {message && (
+          <div className="mb-4 rounded-md border border-emerald-700 bg-emerald-800/40 px-4 py-3 text-emerald-300">
+            {message}
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-4 rounded-md border border-red-700 bg-red-800/40 px-4 py-3 text-red-300">
+            {error}
+          </div>
+        )}
+
         <div className="overflow-x-auto">
           <table className="w-full border-separate border-spacing-y-2">
             <thead>
@@ -128,12 +222,14 @@ const EmployeeList = () => {
             </thead>
 
             <tbody>
-              {employees.map(emp => (
+              {filteredEmployees.length > 0 ? filteredEmployees.map(emp => (
                 <tr key={emp._id}
                   className={`transition border border-gray-700/40 rounded-xl
                   ${
                     emp.status === "inactive"
                       ? "bg-gray-800/70 text-gray-300"
+                      : emp.status === "pending"
+                      ? "bg-amber-950/40 hover:bg-amber-950/60"
                       : "bg-[#020617]/60 hover:bg-[#020617]/90"
                   }`}
                 >
@@ -181,6 +277,8 @@ const EmployeeList = () => {
                     <span className={`px-4 py-1 text-sm rounded-full font-semibold
                       ${emp.status === "active"
                         ? "bg-emerald-800/40 text-emerald-400 border border-emerald-700"
+                        : emp.status === "pending"
+                        ? "bg-amber-800/40 text-amber-300 border border-amber-700"
                         : "bg-red-800/40 text-red-400 border border-red-700"
                       }`}
                     >
@@ -190,7 +288,6 @@ const EmployeeList = () => {
 
                   <td className="p-3 flex justify-center gap-2">
 
-                    {/* ACTIVE */}
                     {emp.status === "active" ? (
                       <>
                         <button
@@ -239,6 +336,31 @@ const EmployeeList = () => {
                           Deactivate
                         </button>
                       </>
+                    ) : emp.status === "pending" ? (
+                      /* PENDING */
+                      <>
+                        <button
+                          onClick={() => navigate(`/admin/employees/${emp._id}`)}
+                          className="px-3 py-1 bg-gray-700 hover:bg-gray-800 rounded-md text-sm"
+                        >
+                          View
+                        </button>
+
+                        <button
+                          onClick={() => handleResendInvitation(emp._id)}
+                          disabled={resendingId === emp._id}
+                          className="px-3 py-1 bg-amber-700 hover:bg-amber-800 disabled:bg-gray-600 rounded-md text-sm"
+                        >
+                          {resendingId === emp._id ? "Sending..." : "Resend Invitation"}
+                        </button>
+
+                        <button
+                          onClick={() => handleDelete(emp._id)}
+                          className="px-3 py-1 bg-red-700 hover:bg-red-800 rounded-md text-sm"
+                        >
+                          Deactivate
+                        </button>
+                      </>
                     ) : (
                       /* INACTIVE */
                       <>
@@ -267,7 +389,16 @@ const EmployeeList = () => {
                   </td>
 
                 </tr>
-              ))}
+              )) : (
+                <tr>
+                  <td
+                    colSpan="6"
+                    className="rounded-xl bg-[#020617]/60 p-8 text-center text-gray-400"
+                  >
+                    No employees match your search or department filter.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -278,3 +409,4 @@ const EmployeeList = () => {
 };
 
 export default EmployeeList;
+

@@ -20,88 +20,137 @@ const dropIn = {
   visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 140, damping: 16 } }
 };
 
+const highlights = [
+  {
+    title: 'Attendance',
+    text: 'Track daily check-ins and keep records accurate.'
+  },
+  {
+    title: 'Leave requests',
+    text: 'Approve time-off requests with clear visibility.'
+  },
+  {
+    title: 'Task updates',
+    text: 'Keep employees aligned with daily priorities.'
+  }
+];
+
 export default function Home() {
   return (
     <motion.div
-      className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white flex flex-col"
+      className="relative min-h-screen overflow-hidden bg-slate-950 text-slate-100"
       initial="hidden"
       animate="visible"
       variants={container}
     >
-      <motion.header
-        variants={dropIn}
-        className="py-8 text-center shadow-md"
-      >
-        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 via-amber-400 to-red-500">Employment</span>{' '}
-          <span className="text-white">Management System</span>
-        </h1>
-        <motion.div
-          className="mx-auto mt-3 h-1 w-24 rounded-full bg-gradient-to-r from-yellow-400 via-amber-300 to-red-400"
-          initial={{ scaleX: 0 }}
-          animate={{ scaleX: 1 }}
-          transition={{ type: 'spring', stiffness: 120, damping: 16, delay: 0.25 }}
-        />
-      </motion.header>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(250,204,21,0.22),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(16,185,129,0.2),_transparent_30%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.05),transparent_45%,rgba(255,255,255,0.03))]" />
 
-      <main className="flex-grow flex items-center justify-center p-4">
-        <motion.div
-          variants={fadeUp}
-          className="w-full max-w-3xl"
+      <div className="relative z-10 flex min-h-screen flex-col">
+        <motion.header
+          variants={dropIn}
+          className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-5 sm:px-6 lg:px-8"
         >
-          <motion.div
-            variants={fadeUp}
-            className="backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl p-8 md:p-10 shadow-2xl"
-            whileHover={{ boxShadow: "0 20px 40px rgba(0,0,0,0.35)" }}
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-emerald-500 font-bold text-slate-950 shadow-lg shadow-emerald-500/20">
+              EMS
+            </div>
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">Employee portal</p>
+              <p className="text-base font-semibold text-white">Management System</p>
+            </div>
+          </div>
+
+          <Link
+            to="/login"
+            className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
           >
-            <motion.p
-              variants={fadeUp}
-              className="text-lg md:text-xl text-center text-gray-200"
-            >
-              Welcome to the Employment Management System. Choose your portal to get started.
-            </motion.p>
+            Access portal
+          </Link>
+        </motion.header>
 
-            <motion.div
-              variants={fadeUp}
-              className="mt-10 flex flex-col md:flex-row items-center justify-center gap-5"
-            >
-              <Link to="/EmployeeLogin" className="w-full md:w-auto">
-                <motion.button
-                  whileHover={{ scale: 1.04, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full md:w-auto bg-blue-400 text-black px-8 py-4 rounded-2xl text-lg md:text-xl font-semibold shadow-lg focus:outline-none focus:ring-2 focus:ring-yellow-300/70 focus:ring-offset-2 focus:ring-offset-gray-900 hover:bg-blue-300 transition"
-                >
-                  Login as Employee
-                </motion.button>
-              </Link>
+        <main className="flex flex-1 items-center px-4 py-6 sm:px-6 lg:px-8">
+          <div className="mx-auto grid w-full max-w-7xl gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+            <motion.section variants={fadeUp} className="space-y-6">
+              <div className="inline-flex items-center rounded-full border border-amber-400/25 bg-amber-400/10 px-3 py-1 text-sm font-medium text-amber-200">
+                Modern HR operations made simple
+              </div>
 
-              <Link to="/AdminLogin" className="w-full md:w-auto">
-                <motion.button
-                  whileHover={{ scale: 1.04, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full md:w-auto bg-yellow-500 px-8 py-4 rounded-2xl text-lg md:text-xl font-semibold shadow-lg focus:outline-none focus:ring-2 focus:ring-red-400/70 focus:ring-offset-2 focus:ring-offset-gray-900 hover:bg-yellow-400 transition"
-                >
-                  Login as Admin
-                </motion.button>
-              </Link>
-            </motion.div>
+              <div className="space-y-4">
+                <h1 className="text-4xl font-black leading-tight sm:text-5xl lg:text-6xl">
+                  Keep your team organized with one smart workspace.
+                </h1>
+                <p className="max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl">
+                  From attendance and leave requests to employee task updates, this platform helps admins and employees stay connected and productive.
+                </p>
+              </div>
 
-            <motion.p
-              variants={fadeUp}
-              className="mt-6 text-center text-sm text-gray-400"
-            >
-              Don’t have an account? Contact your administrator for access.
-            </motion.p>
-          </motion.div>
-        </motion.div>
-      </main>
+              <div className="grid gap-3 sm:grid-cols-3">
+                {highlights.map((item) => (
+                  <div key={item.title} className="rounded-2xl border border-white/10 bg-white/10 p-4 shadow-lg shadow-black/20 backdrop-blur">
+                    <h2 className="text-sm font-semibold text-white">{item.title}</h2>
+                    <p className="mt-1 text-sm leading-6 text-slate-300">{item.text}</p>
+                  </div>
+                ))}
+              </div>
+            </motion.section>
 
-      <motion.footer
-        variants={fadeUp}
-        className="bg-black/60 backdrop-blur border-t border-white/10 text-gray-400 text-center py-4"
-      >
-        &copy; {new Date().getFullYear()} Employment Management System. All rights reserved.
-      </motion.footer>
+            <motion.section variants={fadeUp} className="mx-auto w-full max-w-xl">
+              <div className="rounded-[28px] border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-black/40 backdrop-blur-xl sm:p-8">
+                <div className="mb-6 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm uppercase tracking-[0.25em] text-emerald-300">Welcome back</p>
+                    <h2 className="mt-1 text-2xl font-semibold text-white">Sign in to continue</h2>
+                  </div>
+                  <div className="rounded-2xl bg-emerald-500/15 px-3 py-2 text-sm font-semibold text-emerald-300">
+                    Secure access
+                  </div>
+                </div>
+
+                <p className="text-base leading-7 text-slate-300">
+                  Use your employee credentials to access the dashboard, review updates, and manage your day efficiently.
+                </p>
+
+                <div className="mt-6 space-y-3 text-sm text-slate-300">
+                  <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-3">
+                    <span className="text-lg text-emerald-300">•</span>
+                    <span>Quick sign-in for employees and admins</span>
+                  </div>
+                  <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-3">
+                    <span className="text-lg text-emerald-300">•</span>
+                    <span>Track daily activities from one place</span>
+                  </div>
+                  <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-3">
+                    <span className="text-lg text-emerald-300">•</span>
+                    <span>Stay updated on leaves, tasks, and attendance</span>
+                  </div>
+                </div>
+
+                <Link to="/login" className="mt-7 block">
+                  <motion.button
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full rounded-2xl bg-gradient-to-r from-amber-400 to-emerald-500 px-6 py-3.5 text-lg font-semibold text-slate-950 shadow-lg shadow-emerald-500/20 transition hover:brightness-110"
+                  >
+                    Login to dashboard
+                  </motion.button>
+                </Link>
+
+                <p className="mt-4 text-center text-sm text-slate-400">
+                  Don’t have an account? Contact your administrator for access.
+                </p>
+              </div>
+            </motion.section>
+          </div>
+        </main>
+
+        <motion.footer
+          variants={fadeUp}
+          className="border-t border-white/10 bg-slate-950/70 px-4 py-4 text-center text-sm text-slate-400 sm:px-6 lg:px-8"
+        >
+          &copy; {new Date().getFullYear()} Employment Management System. All rights reserved.
+        </motion.footer>
+      </div>
     </motion.div>
   );
 }

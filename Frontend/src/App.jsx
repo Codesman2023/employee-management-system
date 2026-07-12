@@ -1,12 +1,12 @@
 import React from "react";
-import { Route, Routes } from "react-router-dom";
-import EmployeeLogin from "./components/EmployeeLogin";
+import { Navigate, Route, Routes } from "react-router-dom";
+import Login from "./components/Login";
+import ForgotPassword from "./components/ForgotPassword";
+import ResetPassword from "./components/ResetPassword";
 import Home from "./components/home";
 import Employee from "./components/employeedeshboard";
 import AdminProtectWrapper from "./components/AdminProtectWrapper";
 import EmployeeProtectWrapper from "./components/EmployeeProtectWrapper";
-import AdminLogin from "./components/AdminLogin";
-import AdminSignup from "./components/AdminSignup";
 import AdminDashboard from "./components/admindashboard";
 import AdminLogout from "./components/AdminLogout";
 import EmployeeLogout from "./components/EmployeeLogout";
@@ -14,45 +14,50 @@ import AddEmployee from "./other/AddEmployee";
 import EmployeeList from "./other/EmployeeList";
 import EmployeeProfile from "./other/EmployeeProfile";
 import ApplyLeave from "./components/ApplyLeave";
-import MyLeaves from "./components/MyLeaves";
 import AdminLeavePanel from "./components/AdminLeavePanel";
 import EmpProfile from "./other/EmpProfile";
 import EmployeeChangePassword from "./other/EmployeeChangePassword";
 import EmployeeAttendance from "./other/EmployeeAttendance";
 import AdminAttendanceDashboard from "./other/AdminAttendanceDashboard";
+import AdminLayout from "./components/AdminLayout";
+import EmployeeLayout from "./components/EmployeeLayout";
 
 const App = () => {
+  const adminPage = (children) => (
+    <AdminProtectWrapper>
+      <AdminLayout>{children}</AdminLayout>
+    </AdminProtectWrapper>
+  );
+
+  const employeePage = (children) => (
+    <EmployeeProtectWrapper>
+      <EmployeeLayout>{children}</EmployeeLayout>
+    </EmployeeProtectWrapper>
+  );
+
   return (
     <Routes>
       <Route path="/" element={<Home />} />
-      <Route path="/EmployeeLogin" element={<EmployeeLogin />} />
-      <Route path="/AdminLogin" element={<AdminLogin />} />
-      <Route path="/AdminSignup" element={<AdminSignup />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
+      <Route path="/set-password/:token" element={<ResetPassword mode="setup" />} />
+      <Route path="/EmployeeLogin" element={<Navigate to="/login" replace />} />
+      <Route path="/AdminLogin" element={<Navigate to="/login" replace />} />
+      <Route path="/AdminSignup" element={<Navigate to="/login" replace />} />
       <Route
         path="/admindashboard"
-        element={
-          <AdminProtectWrapper>
-            <AdminDashboard />
-          </AdminProtectWrapper>
-        }
+        element={adminPage(<AdminDashboard />)}
       />
       <Route
         path="/employeedashboard"
-        element={
-          <EmployeeProtectWrapper>
-            <Employee />
-          </EmployeeProtectWrapper>
-        }
+        element={employeePage(<Employee />)}
       />
       <Route path="/employee/profile" element={
-        <EmployeeProtectWrapper>
-          <EmpProfile />
-        </EmployeeProtectWrapper>
+        employeePage(<EmpProfile />)
       } />
       <Route path="/employee/change-password" element={
-        <EmployeeProtectWrapper>
-          <EmployeeChangePassword />
-        </EmployeeProtectWrapper>
+        employeePage(<EmployeeChangePassword />)
       } />
       <Route
         path="/admin/logout"
@@ -72,53 +77,31 @@ const App = () => {
       />
       <Route
         path="/admin/add-employee"
-        element={
-          <AdminProtectWrapper>
-            <AddEmployee />
-          </AdminProtectWrapper>
-        }
+        element={adminPage(<AddEmployee />)}
       />
-      <Route path="/admin/employees" element={<EmployeeList />} />
-      <Route path="/admin/employees/:id" element={<EmployeeProfile />} />
+      <Route
+        path="/admin/employees"
+        element={adminPage(<EmployeeList />)}
+      />
+      <Route
+        path="/admin/employees/:id"
+        element={adminPage(<EmployeeProfile />)}
+      />
       <Route
         path="/employee/apply-leave"
-        element={
-          <EmployeeProtectWrapper>
-            <ApplyLeave />
-          </EmployeeProtectWrapper>
-        }
-      />
-      <Route
-        path="/employee/my-leaves"
-        element={
-          <EmployeeProtectWrapper>
-            <MyLeaves />
-          </EmployeeProtectWrapper>
-        }
+        element={employeePage(<ApplyLeave />)}
       />
       <Route
         path="/employee/attendance"
-        element={
-          <EmployeeProtectWrapper>
-            <EmployeeAttendance />
-          </EmployeeProtectWrapper>
-        }
+        element={employeePage(<EmployeeAttendance />)}
       />  
       <Route
         path="/admin/leave-panel"
-        element={
-          <AdminProtectWrapper>
-            <AdminLeavePanel />
-          </AdminProtectWrapper>
-        }
+        element={adminPage(<AdminLeavePanel />)}
       />
       <Route
         path="/admin/attendance-dashboard"
-        element={
-          <AdminProtectWrapper>
-            <AdminAttendanceDashboard />
-          </AdminProtectWrapper>
-        }
+        element={adminPage(<AdminAttendanceDashboard />)}
       />
     </Routes>
   );

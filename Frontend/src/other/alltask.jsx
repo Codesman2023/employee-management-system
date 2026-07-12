@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { ExternalLink, Pencil, Trash2 } from "lucide-react";
 import TaskUpdateModal from "../components/TaskUpdateModel";
 
 const AllTask = () => {
@@ -12,11 +13,9 @@ const AllTask = () => {
         const token = localStorage.getItem("token");
         const response = await axios.get(
           `${import.meta.env.VITE_BASE_URL}/admins/tasks`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-        setTasks(response.data.tasks);
+        setTasks(response.data.tasks || []);
       } catch (error) {
         console.error("Error fetching tasks:", error);
       }
@@ -25,9 +24,6 @@ const AllTask = () => {
     fetchTasks();
   }, []);
 
-  const openModal = (task) => setSelectedTask(task);
-  const closeModal = () => setSelectedTask(null);
-
   const handleTaskUpdated = (updatedTask) => {
     setTasks((prev) =>
       prev.map((task) => (task._id === updatedTask._id ? updatedTask : task))
@@ -35,8 +31,7 @@ const AllTask = () => {
   };
 
   const handleDelete = async (taskId) => {
-    const confirmDelete = window.confirm("Delete this task?");
-    if (!confirmDelete) return;
+    if (!window.confirm("Delete this task?")) return;
 
     const token = localStorage.getItem("token");
     try {
@@ -51,118 +46,99 @@ const AllTask = () => {
   };
 
   return (
-    <div className="p-5 rounded mt-5">
-      {/* HEADER */}
-      <div className="bg-red-400 mb-2 py-2 px-4 flex justify-between rounded">
-        <h2 className="text-lg font-medium w-1/5">Employee Name</h2>
-        <h3 className="text-lg font-medium w-1/5">Assigned Task</h3>
-        <h5 className="text-lg font-medium w-1/5">Task Status</h5>
-        <h5 className="text-lg font-medium w-1/5">Due Date</h5>
-        <h5 className="text-lg font-medium w-1/5">Actions</h5>
-      </div>
+    <div className="space-y-3">
+      {!tasks.length && (
+        <div className="rounded-lg border border-white/10 bg-slate-950/40 px-4 py-8 text-center text-sm text-slate-400">
+          No tasks found.
+        </div>
+      )}
 
-      {/* TASK ROWS */}
-      {tasks.map(task => (
-        <div
+      {tasks.map((task) => (
+        <article
           key={task._id}
-          className="border-2 border-emerald-500 mb-3 px-4 py-3 rounded bg-gray-900/50"
+          className="rounded-lg border border-white/10 bg-slate-950/45 p-4"
         >
-          {/* ROW */}
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-medium w-1/5">
-              {task.assignedTo
-                ? task.assignedTo.name
-                  ? task.assignedTo.name
-                  : task.assignedTo.fullname
-                  ? `${task.assignedTo.fullname.firstname} ${task.assignedTo.fullname.lastname}`
-                  : "N/A"
-                : "N/A"}
-            </h2>
+          <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr_.8fr_.8fr_auto] lg:items-center">
+            <TaskField label="Employee" value={getEmployeeName(task)} />
+            <TaskField label="Task" value={task.title} valueClass="text-cyan-300" />
+            <TaskField
+              label="Status"
+              value={task.status || "N/A"}
+              valueClass="text-amber-300"
+            />
+            <TaskField
+              label="Due Date"
+              value={formatDueDate(task.dueDate)}
+              valueClass="text-rose-300"
+            />
 
-            <h3 className="text-lg font-medium w-1/5 text-blue-400">
-              {task.title}
-            </h3>
-
-            <h3 className="text-lg font-medium w-1/5 text-yellow-400">
-              {task.status}
-            </h3>
-
-            <h5 className="text-lg font-medium w-1/5 text-red-400">
-              {task.dueDate && !isNaN(new Date(task.dueDate))
-                ? new Date(task.dueDate).toLocaleDateString("en-CA")
-                : "N/A"}
-            </h5>
-
-            <div className="w-1/5 flex gap-2">
+            <div className="flex flex-wrap gap-2 lg:justify-end">
               <button
-                onClick={() => openModal(task)}
-                className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700"
+                onClick={() => setSelectedTask(task)}
+                className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-cyan-500 px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400"
               >
+                <Pencil size={15} />
                 Edit
               </button>
 
               <button
                 onClick={() => handleDelete(task._id)}
-                className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-700"
+                className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-rose-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-rose-400"
               >
+                <Trash2 size={15} />
                 Delete
               </button>
             </div>
           </div>
 
-          {/* ===================== LINKS SECTION ===================== */}
-          <div className="mt-3 p-3 rounded bg-gray-800 border border-emerald-600">
-            <h3 className="text-sm font-semibold text-emerald-400 mb-2">
+          <div className="mt-4 rounded-lg border border-white/10 bg-black/20 p-3">
+            <h3 className="text-sm font-semibold text-emerald-300">
               Submitted / Attached Links
             </h3>
 
             {task.links && task.links.length > 0 ? (
-              <div className="space-y-2">
+              <div className="mt-3 space-y-2">
                 {task.links.map((link, i) => (
                   <div
                     key={i}
-                    className="flex justify-between items-center bg-gray-900 px-3 py-2 rounded border border-gray-700"
+                    className="flex flex-col gap-2 rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <a
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-400 underline break-all hover:text-blue-300"
+                      className="inline-flex min-w-0 items-center gap-2 text-sm text-cyan-300 hover:text-cyan-200"
                     >
-                      {link.url}
+                      <ExternalLink size={14} className="shrink-0" />
+                      <span className="break-all">{link.url}</span>
                     </a>
 
-                    <div className="flex gap-3 text-xs">
+                    <div className="flex shrink-0 flex-wrap items-center gap-2 text-xs text-slate-400">
                       <span
-                        className={`px-2 py-1 rounded 
-                          ${
-                            link.addedBy === "employee"
-                              ? "bg-green-700"
-                              : "bg-yellow-700"
-                          }
-                        `}
+                        className={`rounded-md px-2 py-1 font-medium ${
+                          link.addedBy === "employee"
+                            ? "bg-emerald-400/10 text-emerald-300"
+                            : "bg-amber-400/10 text-amber-300"
+                        }`}
                       >
                         {link.addedBy === "employee" ? "Employee" : "Admin"}
                       </span>
-
-                      <span className="text-gray-400">
-                        {new Date(link.addedAt).toLocaleString()}
-                      </span>
+                      <span>{formatLinkDate(link.addedAt)}</span>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-400 text-sm">No links submitted yet 🚫</p>
+              <p className="mt-3 text-sm text-slate-400">No links submitted yet.</p>
             )}
           </div>
-        </div>
+        </article>
       ))}
 
       {selectedTask && (
         <TaskUpdateModal
           task={selectedTask}
-          onClose={closeModal}
+          onClose={() => setSelectedTask(null)}
           onUpdate={handleTaskUpdated}
         />
       )}
@@ -170,14 +146,36 @@ const AllTask = () => {
   );
 };
 
-export default AllTask;
+function TaskField({ label, value, valueClass = "text-white" }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        {label}
+      </p>
+      <p className={`mt-1 truncate text-sm font-semibold ${valueClass}`}>
+        {value || "N/A"}
+      </p>
+    </div>
+  );
+}
 
-// <h2 className='text-lg font-medium w-1/5'>
-//   {task.assignedTo
-//     ? (task.assignedTo.name
-//         ? task.assignedTo.name
-//         : task.assignedTo.fullname
-//           ? `${task.assignedTo.fullname.firstname} ${task.assignedTo.fullname.lastname}`
-//           : 'N/A')
-//     : 'N/A'}
-// </h2>
+function getEmployeeName(task) {
+  if (!task.assignedTo) return "N/A";
+  if (task.assignedTo.name) return task.assignedTo.name;
+  if (task.assignedTo.fullname) {
+    return `${task.assignedTo.fullname.firstname} ${task.assignedTo.fullname.lastname}`;
+  }
+  return "N/A";
+}
+
+function formatDueDate(date) {
+  return date && !Number.isNaN(new Date(date))
+    ? new Date(date).toLocaleDateString("en-CA")
+    : "N/A";
+}
+
+function formatLinkDate(date) {
+  return date ? new Date(date).toLocaleString() : "";
+}
+
+export default AllTask;

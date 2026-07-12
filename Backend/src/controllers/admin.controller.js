@@ -5,7 +5,32 @@ const blackListTokenModel = require("../models/blacklistToken.model");
 const Task = require("../models/task.model");
 const { createTask } = require("../controllers/admin.controller");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 const Employee = require("../models/user.Employeemodel");
+const {
+  sendEmployeeInvitationEmail,
+  sendTaskAssignedEmail,
+} = require("../services/email.service");
+
+const INVITATION_EXPIRES_IN_MS = 48 * 60 * 60 * 1000;
+
+const hashSetupToken = (token) => {
+  return crypto.createHash("sha256").update(token).digest("hex");
+};
+
+const createSetupToken = () => {
+  const token = crypto.randomBytes(32).toString("hex");
+  return {
+    token,
+    hashedToken: hashSetupToken(token),
+    expiresAt: Date.now() + INVITATION_EXPIRES_IN_MS
+  };
+};
+
+const buildSetupLink = (token) => {
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  return `${frontendUrl}/set-password/${token}`;
+};
 
 module.exports.getEmployeeProfile = async (req, res) => {
   try {
@@ -37,9 +62,9 @@ module.exports.getEmployeeProfile = async (req, res) => {
 
 module.exports.createEmployee = async (req, res) => {
   try {
-    const { name, email, password, department, designation } = req.body;
+    const { name, email, department, designation } = req.body;
 
-    if (!name || !email || !password) {
+    if (!name || !email) {
       return res.status(400).json({ message: "Required fields missing" });
     }
 
@@ -48,31 +73,80 @@ module.exports.createEmployee = async (req, res) => {
       return res.status(409).json({ message: "Employee already exists" });
     }
 
-    const hashed = await bcrypt.hash(password, 10);
+    const setupToken = createSetupToken();
 
     const newEmployee = await Employee.create({
       name,
       email,
-      password: hashed,
       department: department || "General",
       designation: designation || "Employee",
       role: "employee",
-      status: "active",
-      joiningDate: new Date()
+      status: "pending",
+      joiningDate: new Date(),
+      passwordResetToken: setupToken.hashedToken,
+      passwordResetExpires: setupToken.expiresAt
+    });
+
+    await sendEmployeeInvitationEmail({
+      email: newEmployee.email,
+      name: newEmployee.name,
+      setupLink: buildSetupLink(setupToken.token)
     });
 
     res.status(201).json({
-      message: "Employee created successfully",
+      message: "Employee created with pending status. Invitation email sent.",
       employee: {
         _id: newEmployee._id,
         name: newEmployee.name,
-        email: newEmployee.email
+        email: newEmployee.email,
+        status: newEmployee.status,
+        passwordResetExpires: newEmployee.passwordResetExpires
       }
     });
 
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Server error", error });
+  }
+};
+
+module.exports.resendInvitation = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const employee = await Employee.findById(id);
+
+    if (!employee) {
+      return res.status(404).json({ message: "Employee not found" });
+    }
+
+    if (employee.status === "active") {
+      return res.status(400).json({ message: "Employee is already active" });
+    }
+
+    const setupToken = createSetupToken();
+    employee.status = "pending";
+    employee.passwordResetToken = setupToken.hashedToken;
+    employee.passwordResetExpires = setupToken.expiresAt;
+    await employee.save({ validateBeforeSave: false });
+
+    await sendEmployeeInvitationEmail({
+      email: employee.email,
+      name: employee.name,
+      setupLink: buildSetupLink(setupToken.token)
+    });
+
+    return res.status(200).json({
+      message: "Invitation email resent",
+      employee: {
+        _id: employee._id,
+        name: employee.name,
+        email: employee.email,
+        status: employee.status,
+        passwordResetExpires: employee.passwordResetExpires
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Unable to resend invitation", error });
   }
 };
 
@@ -195,12 +269,18 @@ module.exports.logoutUser = async (req, res, next) => {
 // ➕ Create Task
 module.exports.createTask = async (req, res) => {
   try {
-    const { title, dueDate, assignedTo, category, description, links } = req.body;
+    const { title, dueDate, assignedTo, category, description, priority, links } = req.body;
 
     if (!title || !assignedTo) {
       return res
         .status(400)
         .json({ msg: "Title and assignedTo are required." });
+    }
+
+    const employee = await Employee.findById(assignedTo);
+
+    if (!employee) {
+      return res.status(404).json({ msg: "Assigned employee not found." });
     }
 
     // Accept links array if provided and normalise entries
@@ -221,10 +301,31 @@ module.exports.createTask = async (req, res) => {
       assignedTo,
       category,
       description,
+      priority,
       links: normalizedLinks
     });
 
     await newTask.save();
+
+    try {
+      const taskDetails = [
+        `Title: ${newTask.title}`,
+        `Category: ${newTask.category}`,
+        `Priority: ${newTask.priority}`,
+        `Due Date: ${new Date(newTask.dueDate).toLocaleDateString("en-IN")}`,
+        newTask.description ? `Description: ${newTask.description}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      await sendTaskAssignedEmail({
+        email: employee.email,
+        name: employee.name,
+        taskDetails,
+      });
+    } catch (emailError) {
+      console.error("Task assignment email failed:", emailError.message);
+    }
 
     res.status(201).json({ msg: "Task created successfully", task: newTask });
   } catch (error) {

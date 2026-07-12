@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
+const formatLinkLabel = (url) => {
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+};
+
 export default function TaskList() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,14 +30,12 @@ export default function TaskList() {
 
       setTasks(res.data.tasks || []);
       setLoading(false);
-
     } catch (err) {
       console.log("Task fetch failed", err);
       setLoading(false);
     }
   }
 
-  // ================= SUBMIT EMPLOYEE LINK =================
   async function submitLink(taskId) {
     const link = linkInput[taskId];
 
@@ -51,70 +58,113 @@ export default function TaskList() {
       setLinkInput((prev) => ({ ...prev, [taskId]: "" }));
 
       fetchTasks();
-
     } catch (err) {
       alert(err.response?.data?.msg || "Failed to submit link");
     }
   }
 
-  // ================= MARK COMPLETED / FAILED =================
   async function updateStatus(taskId, status) {
+    const link = linkInput[taskId];
+
+    if (!link || link.trim() === "") {
+      alert("Please enter your work link before marking status");
+      return;
+    }
+
     try {
       const token = localStorage.getItem("token");
 
       await axios.put(
         `${import.meta.env.VITE_BASE_URL}/employees/tasks/${taskId}`,
-        { status },
+        { status, link },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       alert(`Task marked as ${status}`);
+      setLinkInput((prev) => ({ ...prev, [taskId]: "" }));
       fetchTasks();
-
     } catch (err) {
       alert(err.response?.data?.msg || "Failed to update status");
     }
   }
 
-  if (loading) return <p className="text-blue-300">Loading tasks...</p>;
+  if (loading) {
+    return (
+      <div className="flex min-h-[220px] items-center justify-center rounded-2xl border border-white/10 bg-slate-900/60 p-8 text-blue-300 shadow-inner">
+        Loading tasks...
+      </div>
+    );
+  }
 
-  if (tasks.length === 0)
-    return <p className="text-blue-300">No tasks assigned yet.</p>;
+  if (tasks.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-cyan-400/30 bg-slate-900/60 p-8 text-center text-blue-300 shadow-inner">
+        No tasks assigned yet.
+      </div>
+    );
+  }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+    <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
       {tasks.map((task) => (
         <div
           key={task._id}
-          className="bg-white/10 border border-white/20 rounded-xl p-5 backdrop-blur-md shadow-xl"
+          className="flex h-full flex-col rounded-2xl border border-white/10 bg-slate-900/70 p-5 shadow-[0_18px_45px_rgba(2,8,23,0.35)] backdrop-blur-md transition duration-200 hover:-translate-y-1 hover:border-cyan-400/40"
         >
-          <h3 className="text-lg font-semibold text-blue-300">
-            {task.title}
-          </h3>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-cyan-300">
+                {task.title}
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-slate-300">
+                {task.description}
+              </p>
+            </div>
 
-          <p className="text-sm mt-1 text-gray-300">
-            {task.description}
-          </p>
-
-          <div className="mt-3 flex gap-2 text-sm">
-            <span className="px-2 py-1 bg-purple-700/50 rounded">
-              Status: {task.status}
-            </span>
-
-            <span className="px-2 py-1 bg-emerald-700/50 rounded">
-              Priority: {task.priority}
-            </span>
+            <div className="flex flex-wrap gap-2 sm:justify-end">
+              <span className="rounded-full border border-purple-400/30 bg-purple-700/30 px-3 py-1 text-xs font-medium text-purple-200">
+                {task.status}
+              </span>
+              <span className="rounded-full border border-emerald-400/30 bg-emerald-700/30 px-3 py-1 text-xs font-medium text-emerald-200">
+                {task.priority}
+              </span>
+            </div>
           </div>
 
-          <p className="mt-2 text-sm text-gray-300">
-            Due: {new Date(task.dueDate).toDateString()}
-          </p>
+          <div className="mt-4 grid gap-3 rounded-xl border border-white/10 bg-slate-950/60 p-3 text-sm text-slate-300 sm:grid-cols-2">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                Due date
+              </p>
+              <p className="mt-1 font-medium text-slate-200">
+                {task.dueDate
+                  ? new Date(task.dueDate).toLocaleDateString("en", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })
+                  : "No due date"}
+              </p>
+            </div>
 
-          {/* ================= ADMIN + EMPLOYEE LINKS ================= */}
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                Task status
+              </p>
+              <p className="mt-1 font-medium text-slate-200">
+                {task.status === "completed"
+                  ? "Completed"
+                  : task.status === "failed"
+                    ? "Needs revision"
+                    : "In progress"}
+              </p>
+            </div>
+          </div>
+
           {task.links && task.links.length > 0 && (
             <div className="mt-4">
-              <p className="text-blue-300 font-medium mb-1">
-                Links (Admin / You):
+              <p className="mb-2 text-sm font-semibold text-cyan-300">
+                Shared links
               </p>
 
               <div className="space-y-2">
@@ -123,10 +173,18 @@ export default function TaskList() {
                     key={index}
                     href={l.url}
                     target="_blank"
-                    className="block px-3 py-2 bg-gray-800 hover:bg-gray-700 duration-200 rounded border border-white/10 text-sm"
+                    rel="noreferrer"
+                    className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-slate-800/80 px-3 py-2.5 text-sm text-slate-200 transition hover:border-cyan-400/40 hover:bg-slate-700/80"
                   >
-                    {l.url}
-                    <span className="ml-2 px-2 py-1 text-xs rounded bg-blue-700/40">
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium">
+                        {formatLinkLabel(l.url)}
+                      </span>
+                      <span className="mt-0.5 block text-xs text-slate-400">
+                        {l.url}
+                      </span>
+                    </span>
+                    <span className="shrink-0 rounded-full bg-cyan-600/20 px-2.5 py-1 text-[11px] font-medium text-cyan-200">
                       {l.addedBy}
                     </span>
                   </a>
@@ -135,10 +193,9 @@ export default function TaskList() {
             </div>
           )}
 
-          {/* ================= SUBMIT WORK LINK ================= */}
-          <div className="mt-5">
-            <p className="text-blue-300 mb-1 text-sm">
-              Submit Your Work Link
+          <div className="mt-5 rounded-xl border border-white/10 bg-slate-950/50 p-3">
+            <p className="mb-2 text-sm font-semibold text-cyan-300">
+              Submit your work link
             </p>
 
             <input
@@ -146,30 +203,31 @@ export default function TaskList() {
               onChange={(e) =>
                 setLinkInput({ ...linkInput, [task._id]: e.target.value })
               }
-              placeholder="https://github.com/... , Google Docs , Drive etc"
-              className="w-full px-3 py-2 rounded bg-transparent border border-white/30 outline-none"
+              placeholder="https://github.com/... or Google Docs"
+              className="w-full rounded-xl border border-white/20 bg-transparent px-3 py-2.5 text-sm text-white outline-none transition focus:border-cyan-400"
             />
 
             <button
               onClick={() => submitLink(task._id)}
-              className="mt-3 w-full py-2 rounded bg-green-600 hover:bg-green-700 transition"
+              className="mt-3 w-full rounded-xl bg-emerald-600 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
             >
               Submit Link
             </button>
           </div>
 
-          {/* ================= COMPLETE / FAILED BUTTONS ================= */}
-          <div className="mt-5 flex gap-3">
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
             <button
               onClick={() => updateStatus(task._id, "completed")}
-              className="flex-1 py-2 rounded bg-blue-600 hover:bg-blue-700 transition"
+              disabled={!linkInput[task._id]?.trim()}
+              className="flex-1 rounded-xl bg-cyan-600 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Mark Completed
             </button>
 
             <button
               onClick={() => updateStatus(task._id, "failed")}
-              className="flex-1 py-2 rounded bg-red-600 hover:bg-red-700 transition"
+              disabled={!linkInput[task._id]?.trim()}
+              className="flex-1 rounded-xl bg-rose-600 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Mark Failed
             </button>

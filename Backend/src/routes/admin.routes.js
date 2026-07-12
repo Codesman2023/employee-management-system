@@ -1,25 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const {body} = require('express-validator');
 const userController = require('../controllers/admin.controller');
 const authMiddleware = require('../middlewares/AdminAuth.middleware');
-
-router.post('/Admin-register', [
-    body('email').isEmail().withMessage('Please enter a valid email address.'),
-    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long.'),
-    body('fullname.firstname').notEmpty().withMessage('First name is required.'),
-    body('fullname.lastname').notEmpty().withMessage('Last name is required.')
-],
-    userController.registerUser
-);
-
-
-router.post('/Admin-login', [
-    body('email').isEmail().withMessage('Please enter a valid email address.'),
-    body('password').notEmpty().withMessage('Password is required.')
-],
-    userController.loginUser
-);
 
 router.post('/tasks', authMiddleware.authUser, userController.createTask);
 
@@ -38,6 +20,8 @@ router.get('/employees', authMiddleware.authUser, userController.getAllEmployees
 router.post('/create-employee', authMiddleware.authUser, userController.createEmployee);
 
 router.get('/employees-list', authMiddleware.authUser, userController.getAllEmployees);
+
+router.post('/employees/:id/resend-invitation', authMiddleware.authUser, userController.resendInvitation);
 
 router.put('/update-employees/:id', authMiddleware.authUser, userController.updateEmployee);
 

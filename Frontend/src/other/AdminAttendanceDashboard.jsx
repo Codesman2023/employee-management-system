@@ -105,7 +105,7 @@ export default function AdminAttendanceDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-800 text-white px-6 py-8">
+    <div className="min-h-screen text-white px-6 py-8">
       <h2 className="text-2xl font-semibold text-blue-300 mb-6">
         Admin Attendance Dashboard
       </h2>

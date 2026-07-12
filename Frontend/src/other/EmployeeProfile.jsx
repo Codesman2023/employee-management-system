@@ -14,7 +14,7 @@ const EmployeeProfile = () => {
   const fetchProfile = async () => {
     try {
       const token = adminToken || localStorage.getItem("token");
-      if (!token) return navigate("/AdminLogin");
+      if (!token) return navigate("/login");
 
       const res = await axios.get(
         `${import.meta.env.VITE_BASE_URL}/admins/employee/${id}`,
@@ -22,8 +22,8 @@ const EmployeeProfile = () => {
       );
 
       setData(res.data);
-    } catch (err) {
-      navigate("/AdminLogin");
+    } catch {
+      navigate("/login");
     } finally {
       setLoading(false);
     }
@@ -36,7 +36,7 @@ const EmployeeProfile = () => {
 
     try {
       const token = adminToken || localStorage.getItem("token");
-      if (!token) return navigate("/AdminLogin");
+      if (!token) return navigate("/login");
 
       await axios.delete(
         `${import.meta.env.VITE_BASE_URL}/admins/delete-employees/${data.employee._id}`,
@@ -45,7 +45,7 @@ const EmployeeProfile = () => {
 
       alert("Employee Deactivated Successfully!");
       navigate("/admin/employees");
-    } catch (err) {
+    } catch {
       alert("Failed to deactivate employee.");
     }
   };
@@ -67,12 +67,11 @@ const EmployeeProfile = () => {
 
   return (
     <div className="w-full min-h-screen flex justify-center py-10 
-    bg-gradient-to-br from-gray-800 via-gray-9000 to-gray-700 text-gray-200">
+     from-gray-800 via-gray-9000 to-gray-700 text-gray-200">
 
       <div className="w-[750px] backdrop-blur-xl bg-[#0f172a]/70 
       border border-gray-700/40 shadow-2xl rounded-3xl p-8">
 
-        {/* Back */}
         <button
           onClick={() => navigate(-1)}
           className="mb-4 px-4 py-2 rounded-lg bg-gray-700 hover:bg-black 
@@ -81,7 +80,6 @@ const EmployeeProfile = () => {
           ⬅ Back
         </button>
 
-        {/* Heading */}
         <h2 className="text-3xl font-extrabold text-center mb-6 text-white tracking-wide">
           Employee Profile
         </h2>
@@ -95,12 +93,17 @@ const EmployeeProfile = () => {
             {emp.name.charAt(0).toUpperCase()}
           </div>
 
-          {/* Info */}
           <div className="flex-1 space-y-2 text-lg">
             <p><b className="text-gray-400">Name:</b> {emp.name}</p>
             <p><b className="text-gray-400">Email:</b> {emp.email}</p>
             <p><b className="text-gray-400">Department:</b> {emp.department || "—"}</p>
             <p><b className="text-gray-400">Designation:</b> {emp.designation || "—"}</p>
+            <p><b className="text-gray-400">Address:</b> {emp.address || "—"}</p>
+            <p><b className="text-gray-400">City:</b> {emp.city || "—"}</p>
+            <p><b className="text-gray-400">State:</b> {emp.state || "—"}</p>
+            <p><b className="text-gray-400">PIN Code:</b> {emp.pincode || "—"}</p>
+            <p><b className="text-gray-400">Country:</b> {emp.country || "—"}</p>
+            <p><b className="text-gray-400">Emergency Contact:</b> {emp.emergencyContact || "—"}</p>
             <p><b className="text-gray-400">Joining Date:</b> {new Date(emp.joiningDate).toLocaleDateString()}</p>
 
             <p>
@@ -116,7 +119,6 @@ const EmployeeProfile = () => {
           </div>
         </div>
 
-        {/* Task Summary */}
         <h3 className="text-xl font-bold mt-8 mb-4 text-center text-gray-300">
           Task Summary
         </h3>
@@ -142,7 +144,6 @@ const EmployeeProfile = () => {
           </div>
         </div>
 
-        {/* Actions */}
         <div className="flex justify-between mt-8">
           <button
             onClick={() => navigate("/admin/employees")}

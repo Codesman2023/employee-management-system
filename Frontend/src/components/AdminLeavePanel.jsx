@@ -17,7 +17,6 @@ export default function AdminLeavePanel() {
       if (res.ok) {
         if (Array.isArray(data)) setLeaves(data);
         else if (Array.isArray(data.leaves)) setLeaves(data.leaves);
-        else if (data.success && Array.isArray(data.leaves)) setLeaves(data.leaves);
         else {
           console.warn('Unexpected leaves response:', data);
           setLeaves([]);
@@ -76,8 +75,8 @@ export default function AdminLeavePanel() {
 
 
   return (
-    <div className="min-h-screen flex justify-center items-center 
-    bg-gradient-to-br  from-gray-900 via-gray-900 to-gray-900 p-6 text-gray-200">
+    <div className="min-h-screen flex justify-center  
+     from-gray-900 via-gray-900 to-gray-900 p-6 text-gray-200">
 
       <div className="w-full max-w-6xl backdrop-blur-xl bg-[#0f172a]/70
       border border-gray-700/40 shadow-2xl rounded-3xl p-6">

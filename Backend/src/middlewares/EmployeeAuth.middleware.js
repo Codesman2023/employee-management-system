@@ -1,6 +1,6 @@
 const employeeModel = require('../models/user.Employeemodel');
-const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const blackListTokenModel = require('../models/blacklistToken.model');
 
 module.exports.authUser = async (req, res, next) => {
   try {
@@ -12,12 +12,15 @@ module.exports.authUser = async (req, res, next) => {
       return res.status(401).json({ message: "Unauthorized - No token" });
     }
 
-    const isBlacklisted = await employeeModel.findOne({ token });
+    const isBlacklisted = await blackListTokenModel.findOne({ token });
     if (isBlacklisted) {
       return res.status(401).json({ message: "Unauthorized - Token invalid" });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.role !== "employee") {
+      return res.status(403).json({ message: "Forbidden" });
+    }
 
     const user = await employeeModel.findById(decoded._id);
 
