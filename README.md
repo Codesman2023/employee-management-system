@@ -2,202 +2,210 @@
 
 ## Overview
 
-Employee Management System (EMS) is a full-stack web application to manage employees, tasks, attendance, and leave workflows with role-based access for Admins and Employees.
+Employee Management System (EMS) is a full-stack application for managing employees, tasks, attendance, leaves, and analytics with Admin and Employee role-based workflows.
 
-- Backend: Node.js, Express, MongoDB (Mongoose)
-- Frontend: React (Vite)
+- **Backend:** Node.js, Express, MongoDB, Mongoose
+- **Frontend:** React, Vite, Tailwind CSS
 
----
-
-## Project Structure
+## Repository Layout
 
 ```text
-EMS/
+employee-management-system/
 ├── Backend/
 │   ├── server.js
+│   ├── package.json
+│   ├── .env
 │   └── src/
 │       ├── app.js
-│       ├── db/
-│       │   └── db.js
-│       ├── routes/
+│       ├── config/
 │       ├── controllers/
+│       ├── db/
 │       ├── middlewares/
 │       ├── models/
+│       ├── routes/
 │       └── services/
 └── Frontend/
+    ├── package.json
+    ├── .env
+    ├── src/
+    ├── public/
+    └── vite.config.js
 ```
 
----
+## Features
 
-## Backend (`/Backend`)
+- Admin and Employee authentication using JWT
+- Admin dashboard for employee, task, leave, attendance and analytics management
+- Employee dashboard for task tracking, leave requests, attendance, and profile updates
+- Task creation, assignment, status updates, and submission links
+- Attendance clock-in / clock-out tracking
+- Leave application, approval, and rejection flows
+- Email notifications via Brevo SMTP
+- Profile image upload using Cloudinary
 
-### Description
+## Prerequisites
 
-- Tech Stack: Node.js, Express, MongoDB
-- Core capabilities: Authentication, task management, attendance, leave handling, analytics
+- Node.js 18+ installed
+- npm available
+- MongoDB running locally or accessible via connection string
 
-### Key Features
+## Backend Setup
 
-- Role-based authentication (Admin / Employee) with JWT
-- Logout with token blacklist handling
-- Task workflow: create -> assign -> update status -> complete
-- Leave and attendance management
-- Analytics endpoints for admin dashboard insights
+1. Open a terminal in `Backend/`
+2. Install dependencies:
 
-### Notable Backend Files
+   ```bash
+   npm install
+   ```
 
-- `server.js`: Entry point (default port `3000`)
-- `src/app.js`: Route and middleware mounting
-- `src/db/db.js`: MongoDB connection setup
-- `src/routes/`: Route definitions
-- `src/controllers/`: Route business logic
-- `src/middlewares/`: Authorization middleware
-- `src/models/`: Mongoose models
-- `src/services/`: Service layer
+3. Create a `.env` file or use the existing `.env` with these values:
 
----
+   ```env
+   DB_CONNECT=mongodb://127.0.0.1:27017/Employee-management-system
+   JWT_SECRET=ems_local_jwt_secret_change_before_production
+   PORT=4000
+   FRONTEND_URL=http://localhost:5173
 
-## Frontend (`/Frontend`)
+   BREVO_SMTP_HOST=smtp-relay.brevo.com
+   BREVO_SMTP_PORT=587
+   BREVO_SMTP_USER=<your-brevo-username>
+   BREVO_SMTP_KEY=<your-brevo-password>
+   BREVO_FROM_EMAIL=<your-from-email>
+   BREVO_FROM_NAME="EMS Support"
 
-### Description
+   CLOUDINARY_CLOUD_NAME=<your-cloudinary-cloud-name>
+   CLOUDINARY_API_KEY=<your-cloudinary-api-key>
+   CLOUDINARY_API_SECRET=<your-cloudinary-api-secret>
+   ```
 
-- Tech Stack: React (Vite)
-- Includes Admin and Employee dashboards for task operations and profile-based access
+4. Start the backend server:
 
-### Main Usage
+   ```bash
+   npm run dev
+   ```
 
-- Admin Dashboard: Create/update/delete tasks, view employees and tasks
-- Employee Dashboard: View assigned tasks, update task status
+5. The API runs by default on `http://localhost:4000`
 
----
+## Frontend Setup
 
-## Authentication
+1. Open a terminal in `Frontend/`
+2. Install dependencies:
 
-All protected endpoints require a valid JWT.
+   ```bash
+   npm install
+   ```
 
-Use in header:
+3. Create or verify `.env` contains:
 
-```http
-Authorization: Bearer <token>
-```
+   ```env
+   VITE_BASE_URL=http://localhost:4000
+   ```
 
-Some flows may also set a `token` cookie on login.
+4. Start the frontend development server:
 
----
+   ```bash
+   npm run dev
+   ```
 
-## API Endpoints
+5. The React app runs by default on `http://localhost:5173`
 
-### Authentication and Profile
+## Useful npm Scripts
 
-| Endpoint | Method | Description | Request Body | Success | Error Status |
-|---|---|---|---|---|---|
-| `/auth/login` | POST | Unified admin/employee login | `{ email, password }` | 200 | 400, 401, 403 |
-| `/admins/profile` | GET | Get admin profile | - | 200 | 401 |
-| `/employees/profile` | GET | Get employee profile | - | 200 | 401 |
+### Backend
 
-### Task Management
+- `npm start` — run the backend with Node
+- `npm run dev` — run the backend with nodemon
+- `npm run seed:admin` — seed the default admin user
 
-| Endpoint | Method | Description | Request Body | Success | Error Status |
-|---|---|---|---|---|---|
-| `/admins/tasks` | POST | Create a task | `{ title, description, assignedTo, dueDate, category }` | 201 | 400, 500 |
-| `/admins/tasks` | GET | Get all tasks (admin) | - | 200 | 401, 500 |
-| `/admins/tasks/:id` | PUT | Update a task | `{ title, description, assignedTo, dueDate, category, status }` | 200 | 400, 404, 500 |
-| `/admins/tasks/:id` | DELETE | Delete a task | - | 200 | 404, 500 |
-| `/employees/tasks` | GET | Get tasks assigned to employee | - | 200 | 401, 500 |
-| `/employees/tasks/:id` | PUT | Update employee task status | `{ status }` | 200 | 403, 404, 500 |
+### Frontend
 
-### Employee Management (Admin)
+- `npm run dev` — start Vite dev server
+- `npm run build` — build production assets
+- `npm run preview` — preview the production build
+- `npm run lint` — run ESLint on frontend files
 
-| Endpoint | Method | Description | Request Body | Success | Error Status |
-|---|---|---|---|---|---|
-| `/admins/employees` | GET | Get all employees | - | 200 | 401, 500 |
+## API Routes
 
-### Attendance
+### Authentication
 
-#### Employee
+- `POST /auth/login` — login for admin or employee
+- `POST /auth/forgot-password` — request password reset
+- `POST /auth/reset-password/:token` — reset password
 
-- `POST /attendance/clock-in`
-- `POST /attendance/clock-out`
-- `GET /attendance/today`
+### Admin Routes
 
-#### Admin
+- `GET /admins/profile` — admin profile
+- `GET /admins/employees` — list employees
+- `POST /admins/tasks` — create task
+- `GET /admins/tasks` — list tasks
+- `PUT /admins/tasks/:id` — update task
+- `DELETE /admins/tasks/:id` — delete task
+- `GET /admins/employees/:id` — employee detail
+- `PUT /admins/employee/:id` — update employee
+- `DELETE /admins/employee/:id` — delete employee
+- `GET /admins/logout` — admin logout
 
-- `GET /attendance/all`
+### Employee Routes
 
-### Leave Management
+- `GET /employees/profile` — employee profile
+- `PUT /employees/profile` — update employee profile
+- `GET /employees/tasks` — list assigned tasks
+- `PUT /employees/tasks/:id` — update employee task status
+- `GET /employees/logout` — employee logout
 
-- `POST /leaves/apply-leave`
-- `GET /leaves/my-leaves`
-- `GET /leaves/all-leaves`
-- `PUT /leaves/approve-leave/:id`
-- `PUT /leaves/reject-leave/:id`
+### Leave Routes
 
-### Analytics (Admin)
+- `POST /leaves/apply-leave` — employee apply leave
+- `GET /leaves/my-leaves` — employee leave history
+- `GET /leaves/all-leaves` — admin leave list
+- `PUT /leaves/approve-leave/:id` — admin approve leave
+- `PUT /leaves/reject-leave/:id` — admin reject leave
 
-- `GET /analytics/summary`
-- `GET /analytics/tasks`
-- `GET /analytics/productivity`
-- `GET /analytics/risk`
+### Attendance Routes
+
+- `POST /attendance/clock-in` — employee clock in
+- `POST /attendance/clock-out` — employee clock out
+- `GET /attendance/today` — employee today attendance
+- `GET /attendance/all` — admin attendance list
 
 ### Employee Task Submission
 
-- `PUT /employee-tasks/tasks/:taskId/add-link`
+- `PUT /employee-tasks/tasks/:taskId/add-link` — submit task link
 
----
+### Analytics Routes
 
-## Request Payload Requirements
+- `GET /analytics/summary` — summary stats
+- `GET /analytics/tasks` — task analytics data
+- `GET /analytics/productivity` — productivity analytics
+- `GET /analytics/risk` — risk analytics
 
-### Create Task (`POST /admins/tasks`)
+## Environment Variables
 
-```json
-{
-  "title": "Task Title",
-  "description": "Task details",
-  "assignedTo": "employeeObjectId",
-  "dueDate": "YYYY-MM-DD",
-  "category": "Task Category"
-}
-```
+### Backend
 
-### Update Task (`PUT /admins/tasks/:id`)
+- `DB_CONNECT` — MongoDB connection string
+- `JWT_SECRET` — secret key for JWT
+- `PORT` — backend port (default `4000`)
+- `FRONTEND_URL` — frontend origin for email links
+- `BREVO_SMTP_HOST` / `BREVO_SMTP_PORT` / `BREVO_SMTP_USER` / `BREVO_SMTP_KEY`
+- `BREVO_FROM_EMAIL` / `BREVO_FROM_NAME`
+- `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET`
 
-```json
-{
-  "title": "Task Title",
-  "description": "Task details",
-  "assignedTo": "employeeObjectId",
-  "dueDate": "YYYY-MM-DD",
-  "category": "Task Category",
-  "status": "pending|in-progress|completed|failed"
-}
-```
+### Frontend
 
-### Employee Task Status Update (`PUT /employees/tasks/:id`)
+- `VITE_BASE_URL` — backend API base URL
 
-```json
-{
-  "status": "pending|in-progress|completed|failed"
-}
-```
+## Notes
 
-Notes:
+- The backend serves static uploads from `/uploads`
+- The frontend uses `import.meta.env.VITE_BASE_URL` to call the backend
+- Seed the initial admin user with `npm run seed:admin`
+- Change default secrets and credentials before deploying to production
 
-- `assignedTo` must be a valid Employee ObjectId
-- Dates should be sent in ISO format (`YYYY-MM-DD`)
+## Contact
 
----
+If you need help running the app, verify the backend is active on `http://localhost:4000` and the frontend on `http://localhost:5173`.
 
-## HTTP Status Codes
-
-- `200 OK`: Successful GET/PUT/DELETE
-- `201 Created`: Successful POST (task creation)
-- `400 Bad Request`: Invalid input data
-- `401 Unauthorized`: Authentication required/failed
-- `403 Forbidden`: Action not allowed
-- `404 Not Found`: Resource not found
-- `500 Internal Server Error`: Server-side failure
-
----
 
 ## Setup Guide
 
