@@ -1,4 +1,5 @@
 const nodemailer = require("nodemailer");
+const axios = require("axios");
 
 const createBrevoTransport = () => {
   const port = Number(process.env.BREVO_SMTP_PORT || 587);
@@ -64,62 +65,42 @@ const getLeaveDetailsHtml = ({ leave, employee }) => {
 `;
 };
 
+
 const sendResetPasswordEmail = async ({ email, resetLink }) => {
-  const transporter = createBrevoTransport();
   const fromName = process.env.BREVO_FROM_NAME || "EMS Support";
   const fromEmail = process.env.BREVO_FROM_EMAIL;
 
-  await transporter.sendMail({
-    from: `"${fromName}" <${fromEmail}>`,
-    to: email,
-    subject: "Reset your EMS password",
-    text: `
-You requested to reset your EMS account password.
-
-Click the link below to create a new password:
-${resetLink}
-
-This link will expire in 15 minutes.
-
-If you didn't request a password reset, you can safely ignore this email.
-`,
-
-    html: `
+  await axios.post(
+    "https://api.brevo.com/v3/smtp/email",
+    {
+      sender: { name: fromName, email: fromEmail },
+      to: [{ email }],
+      subject: "Reset your EMS password",
+      htmlContent: `
 <div style="font-family: Arial, sans-serif; max-width: 500px; margin: auto; padding: 20px; border: 1px solid #e5e5e5; border-radius: 8px;">
   <h2 style="color: #333;">Reset Your Password</h2>
-
   <p>Hello,</p>
-
   <p>We received a request to reset your <strong>EMS</strong> account password.</p>
-
   <p style="margin: 25px 0;">
-    <a href="${resetLink}"
-       style="background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 6px; display: inline-block;">
-      Reset Password
-    </a>
+    <a href="${resetLink}" style="background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 6px; display: inline-block;">Reset Password</a>
   </p>
-
   <p>If the button doesn't work, copy and paste this link into your browser:</p>
-
-  <p>
-    <a href="${resetLink}">${resetLink}</a>
-  </p>
-
+  <p><a href="${resetLink}">${resetLink}</a></p>
   <p><strong>This link will expire in 15 minutes.</strong></p>
-
   <p>If you didn't request a password reset, you can safely ignore this email.</p>
-
   <hr style="margin: 25px 0;">
-
-  <p style="color: #666; font-size: 13px;">
-    Thanks,<br>
-    <strong>EMS Support</strong>
-  </p>
+  <p style="color: #666; font-size: 13px;">Thanks,<br><strong>EMS Support</strong></p>
 </div>
 `,
-  });
+    },
+    {
+      headers: {
+        "api-key": process.env.BREVO_API_KEY,
+        "Content-Type": "application/json",
+      },
+    }
+  );
 };
-
 const sendEmployeeInvitationEmail = async ({ email, name, setupLink }) => {
   const transporter = createBrevoTransport();
   const fromName = process.env.BREVO_FROM_NAME || "EMS Support";
