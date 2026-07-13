@@ -66,10 +66,14 @@ employee-management-system/
    PORT=4000
    FRONTEND_URL=http://localhost:5173
 
+   # Recommended on Render/Vercel because HTTPS API calls are more reliable than SMTP ports.
+   BREVO_API_KEY=<your-brevo-api-key>
+
+   # Optional SMTP fallback for local/dev environments.
    BREVO_SMTP_HOST=smtp-relay.brevo.com
    BREVO_SMTP_PORT=587
    BREVO_SMTP_USER=<your-brevo-username>
-   BREVO_SMTP_KEY=<your-brevo-password>
+   BREVO_SMTP_KEY=<your-brevo-smtp-key>
    BREVO_FROM_EMAIL=<your-from-email>
    BREVO_FROM_NAME="EMS Support"
 
@@ -187,7 +191,8 @@ employee-management-system/
 - `JWT_SECRET` — secret key for JWT
 - `PORT` — backend port (default `4000`)
 - `FRONTEND_URL` — frontend origin for email links
-- `BREVO_SMTP_HOST` / `BREVO_SMTP_PORT` / `BREVO_SMTP_USER` / `BREVO_SMTP_KEY`
+- `BREVO_API_KEY` — recommended Brevo transactional email API key for deployed servers
+- `BREVO_SMTP_HOST` / `BREVO_SMTP_PORT` / `BREVO_SMTP_USER` / `BREVO_SMTP_KEY` — optional SMTP fallback
 - `BREVO_FROM_EMAIL` / `BREVO_FROM_NAME`
 - `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET`
 

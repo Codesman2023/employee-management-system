@@ -1,4 +1,5 @@
 const nodemailer = require("nodemailer");
+const axios = require("axios");
 
 const createBrevoTransport = () => {
   const port = Number(process.env.BREVO_SMTP_PORT || 587);
@@ -11,6 +12,73 @@ const createBrevoTransport = () => {
       user: process.env.BREVO_SMTP_USER,
       pass: process.env.BREVO_SMTP_KEY,
     },
+    connectionTimeout: Number(process.env.EMAIL_CONNECTION_TIMEOUT_MS || 15000),
+    greetingTimeout: Number(process.env.EMAIL_GREETING_TIMEOUT_MS || 10000),
+    socketTimeout: Number(process.env.EMAIL_SOCKET_TIMEOUT_MS || 15000),
+  });
+};
+
+const getSender = () => ({
+  name: process.env.BREVO_FROM_NAME || "EMS Support",
+  email: process.env.BREVO_FROM_EMAIL,
+});
+
+const assertEmailConfig = () => {
+  const { email } = getSender();
+
+  if (!email) {
+    throw new Error("BREVO_FROM_EMAIL is not configured");
+  }
+
+  if (!process.env.BREVO_API_KEY && (!process.env.BREVO_SMTP_USER || !process.env.BREVO_SMTP_KEY)) {
+    throw new Error("Email is not configured. Set BREVO_API_KEY, or BREVO_SMTP_USER and BREVO_SMTP_KEY.");
+  }
+};
+
+const normalizeRecipients = (to) => {
+  const recipients = Array.isArray(to) ? to : [to];
+  return recipients.filter(Boolean);
+};
+
+const sendEmail = async ({ to, subject, text, html }) => {
+  assertEmailConfig();
+
+  const recipients = normalizeRecipients(to);
+  const sender = getSender();
+
+  if (!recipients.length) {
+    throw new Error("No email recipients provided");
+  }
+
+  if (process.env.BREVO_API_KEY) {
+    await axios.post(
+      "https://api.brevo.com/v3/smtp/email",
+      {
+        sender,
+        to: recipients.map((email) => ({ email })),
+        subject,
+        textContent: text,
+        htmlContent: html,
+      },
+      {
+        headers: {
+          accept: "application/json",
+          "api-key": process.env.BREVO_API_KEY,
+          "content-type": "application/json",
+        },
+        timeout: Number(process.env.EMAIL_API_TIMEOUT_MS || 15000),
+      }
+    );
+    return;
+  }
+
+  const transporter = createBrevoTransport();
+  await transporter.sendMail({
+    from: `"${sender.name}" <${sender.email}>`,
+    to: recipients,
+    subject,
+    text,
+    html,
   });
 };
 
@@ -61,12 +129,7 @@ const getLeaveDetailsHtml = ({ leave, employee }) => {
 };
 
 const sendResetPasswordEmail = async ({ email, resetLink }) => {
-  const transporter = createBrevoTransport();
-  const fromName = process.env.BREVO_FROM_NAME || "EMS Support";
-  const fromEmail = process.env.BREVO_FROM_EMAIL;
-
-  await transporter.sendMail({
-    from: `"${fromName}" <${fromEmail}>`,
+  await sendEmail({
     to: email,
     subject: "Reset your EMS password",
     text: `
@@ -117,13 +180,9 @@ If you didn't request a password reset, you can safely ignore this email.
 };
 
 const sendEmployeeInvitationEmail = async ({ email, name, setupLink }) => {
-  const transporter = createBrevoTransport();
-  const fromName = process.env.BREVO_FROM_NAME || "EMS Support";
-  const fromEmail = process.env.BREVO_FROM_EMAIL;
   const displayName = name || "there";
 
-  await transporter.sendMail({
-    from: `"${fromName}" <${fromEmail}>`,
+  await sendEmail({
     to: email,
     subject: "Welcome to EMS - set your password",
     text: `
@@ -171,14 +230,10 @@ This link will expire in 48 hours.
 };
 
 const sendTaskAssignedEmail = async ({ email, name, taskDetails }) => {
-  const transporter = createBrevoTransport();
-  const fromName = process.env.BREVO_FROM_NAME || "EMS Support";
-  const fromEmail = process.env.BREVO_FROM_EMAIL;
   const displayName = name || "there";
   const formattedTaskDetails = escapeHtml(taskDetails).replace(/\n/g, "<br>");
 
-  await transporter.sendMail({
-    from: `"${fromName}" <${fromEmail}>`,
+  await sendEmail({
     to: email,
     subject: "Task Assigned",
     text: `
@@ -220,13 +275,9 @@ const sendLeaveRequestEmailToAdmin = async ({ adminEmails, leave, employee }) =>
     throw new Error("No admin email recipients found for leave request notification");
   }
 
-  const transporter = createBrevoTransport();
-  const fromName = process.env.BREVO_FROM_NAME || "EMS Support";
-  const fromEmail = process.env.BREVO_FROM_EMAIL;
   const employeeName = employee?.name || "Employee";
 
-  await transporter.sendMail({
-    from: `"${fromName}" <${fromEmail}>`,
+  await sendEmail({
     to: recipients,
     subject: `New Leave Request - ${employeeName}`,
     text: `
@@ -265,16 +316,12 @@ const sendLeaveStatusEmailToEmployee = async ({ leave, employee, admin }) => {
     throw new Error("No employee email found for leave status notification");
   }
 
-  const transporter = createBrevoTransport();
-  const fromName = process.env.BREVO_FROM_NAME || "EMS Support";
-  const fromEmail = process.env.BREVO_FROM_EMAIL;
   const displayName = employee?.name || "there";
   const adminName = admin?.fullname
     ? `${admin.fullname.firstname || ""} ${admin.fullname.lastname || ""}`.trim()
     : "Admin";
 
-  await transporter.sendMail({
-    from: `"${fromName}" <${fromEmail}>`,
+  await sendEmail({
     to: employee.email,
     subject: `Leave Request ${leave.status}`,
     text: `
@@ -316,16 +363,12 @@ const sendTaskLinkSubmittedEmailToAdmin = async ({ adminEmails, task, employee, 
     throw new Error("No admin email recipients found for task link notification");
   }
 
-  const transporter = createBrevoTransport();
-  const fromName = process.env.BREVO_FROM_NAME || "EMS Support";
-  const fromEmail = process.env.BREVO_FROM_EMAIL;
   const employeeName = employee?.name || "Employee";
   const employeeEmail = employee?.email || "N/A";
   const taskTitle = task?.title || "Task";
   const taskStatus = status || task?.status || "N/A";
 
-  await transporter.sendMail({
-    from: `"${fromName}" <${fromEmail}>`,
+  await sendEmail({
     to: recipients,
     subject: `Work Link Submitted - ${employeeName}`,
     text: `
