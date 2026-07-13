@@ -95,6 +95,7 @@ module.exports.forgotPassword = async (req, res) => {
 
     return res.status(200).json({ message: genericMessage });
   } catch (error) {
+    console.error("Forgot password error:", error); 
     return res.status(500).json({ message: "Unable to send password reset email" });
   }
 };
