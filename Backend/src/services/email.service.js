@@ -1,5 +1,55 @@
-const nodemailer = require("nodemailer");
 const axios = require("axios");
+
+
+const sendBrevoEmail = async ({ to, subject, text, html }) => {
+  const fromName = process.env.BREVO_FROM_NAME || "EMS Support";
+  const fromEmail = process.env.BREVO_FROM_EMAIL;
+
+  if (!process.env.BREVO_API_KEY) {
+    throw new Error("BREVO_API_KEY is not set");
+  }
+  if (!fromEmail) {
+    throw new Error("BREVO_FROM_EMAIL is not set");
+  }
+
+  // Accept a single email string, a single {email, name} object,
+  // or an array of either.
+  const recipients = (Array.isArray(to) ? to : [to])
+    .filter(Boolean)
+    .map((entry) => (typeof entry === "string" ? { email: entry } : entry));
+
+  if (!recipients.length) {
+    throw new Error("No recipients provided for email");
+  }
+
+  try {
+    await axios.post(
+      "https://api.brevo.com/v3/smtp/email",
+      {
+        sender: { name: fromName, email: fromEmail },
+        to: recipients,
+        subject,
+        textContent: text,
+        htmlContent: html,
+      },
+      {
+        headers: {
+          "api-key": process.env.BREVO_API_KEY,
+          "Content-Type": "application/json",
+        },
+        timeout: 10000, // fail fast instead of hanging the request
+      }
+    );
+  } catch (err) {
+    // Surface Brevo's actual error message (e.g. 401 unauthorized key,
+    // 400 unverified sender) instead of a generic axios error.
+    const brevoMessage = err.response?.data?.message;
+    const status = err.response?.status;
+    throw new Error(
+      `Brevo API error${status ? ` (${status})` : ""}: ${brevoMessage || err.message}`
+    );
+  }
+};
 
 const escapeHtml = (value = "") => {
   return String(value)
@@ -48,16 +98,11 @@ const getLeaveDetailsHtml = ({ leave, employee }) => {
 };
 
 const sendResetPasswordEmail = async ({ email, resetLink }) => {
-  const fromName = process.env.BREVO_FROM_NAME || "EMS Support";
-  const fromEmail = process.env.BREVO_FROM_EMAIL;
-
-  await axios.post(
-    "https://api.brevo.com/v3/smtp/email",
-    {
-      sender: { name: fromName, email: fromEmail },
-      to: [{ email }],
-      subject: "Reset your EMS password",
-      htmlContent: `
+  await sendBrevoEmail({
+    to: email,
+    subject: "Reset your EMS password",
+    text: `Reset your EMS password using this link (expires in 15 minutes): ${resetLink}`,
+    html: `
 <div style="font-family: Arial, sans-serif; max-width: 500px; margin: auto; padding: 20px; border: 1px solid #e5e5e5; border-radius: 8px;">
   <h2 style="color: #333;">Reset Your Password</h2>
   <p>Hello,</p>
@@ -73,28 +118,17 @@ const sendResetPasswordEmail = async ({ email, resetLink }) => {
   <p style="color: #666; font-size: 13px;">Thanks,<br><strong>EMS Support</strong></p>
 </div>
 `,
-    },
-    {
-      headers: {
-        "api-key": process.env.BREVO_API_KEY,
-        "Content-Type": "application/json",
-      },
-    },
-  );
+  });
 };
 
 const sendEmployeeInvitationEmail = async ({ email, name, setupLink }) => {
-  const fromName = process.env.BREVO_FROM_NAME || "EMS Support";
-  const fromEmail = process.env.BREVO_FROM_EMAIL;
   const displayName = name || "there";
 
-  await axios.post("https://api.brevo.com/v3/smtp/email", {
-    sender: { name: fromName, email: fromEmail },
-    to: [{ email }],
+  await sendBrevoEmail({
+    to: { email, name: displayName },
     subject: "Welcome to EMS - set your password",
-    htmlContent: `
-<div style="font-family: Arial, sans-serif; max-width: 500px; margin: auto; padding: 20px; border: 1px solid #e5e5e5; border-radius: 8px;">
-  <h2 style="color: #333;">Welcome to EMS</h2>
+    text: `
+Welcome to EMS, ${displayName}.
 
 Your admin has created your employee account.
 
@@ -107,7 +141,7 @@ This link will expire in 48 hours.
 <div style="font-family: Arial, sans-serif; max-width: 500px; margin: auto; padding: 20px; border: 1px solid #e5e5e5; border-radius: 8px;">
   <h2 style="color: #333;">Welcome to EMS</h2>
 
-  <p>Hello ${displayName},</p>
+  <p>Hello ${escapeHtml(displayName)},</p>
 
   <p>Your admin has created your employee account. Set your password to activate your account.</p>
 
@@ -138,16 +172,13 @@ This link will expire in 48 hours.
 };
 
 const sendTaskAssignedEmail = async ({ email, name, taskDetails }) => {
-  const fromName = process.env.BREVO_FROM_NAME || "EMS Support";
-  const fromEmail = process.env.BREVO_FROM_EMAIL;
   const displayName = name || "there";
   const formattedTaskDetails = escapeHtml(taskDetails).replace(/\n/g, "<br>");
 
-  await axios.post("https://api.brevo.com/v3/smtp/email", {
-    sender: { name: fromName, email: fromEmail },
-    to: [{ email }],
+  await sendBrevoEmail({
+    to: { email, name: displayName },
     subject: "Task Assigned",
-    htmlContent: `
+    text: `
 Hello ${displayName},
 
 You have been assigned a new task:
@@ -179,30 +210,19 @@ Please log in to your EMS account to view more details.
   });
 };
 
-const sendLeaveRequestEmailToAdmin = async ({
-  adminEmails,
-  leave,
-  employee,
-}) => {
-  const recipients = Array.isArray(adminEmails)
-    ? adminEmails.filter(Boolean)
-    : [adminEmails].filter(Boolean);
+const sendLeaveRequestEmailToAdmin = async ({ adminEmails, leave, employee }) => {
+  const recipients = Array.isArray(adminEmails) ? adminEmails.filter(Boolean) : [adminEmails].filter(Boolean);
 
   if (!recipients.length) {
-    throw new Error(
-      "No admin email recipients found for leave request notification",
-    );
+    throw new Error("No admin email recipients found for leave request notification");
   }
 
-  const fromName = process.env.BREVO_FROM_NAME || "EMS Support";
-  const fromEmail = process.env.BREVO_FROM_EMAIL;
   const employeeName = employee?.name || "Employee";
 
-  await axios.post("https://api.brevo.com/v3/smtp/email", {
-    sender: { name: fromName, email: fromEmail },
-    to: [{ email }],
+  await sendBrevoEmail({
+    to: recipients,
     subject: `New Leave Request - ${employeeName}`,
-    htmlContent: `
+    text: `
 Hello Admin,
 
 A new leave request has been submitted.
@@ -238,18 +258,15 @@ const sendLeaveStatusEmailToEmployee = async ({ leave, employee, admin }) => {
     throw new Error("No employee email found for leave status notification");
   }
 
-  const fromName = process.env.BREVO_FROM_NAME || "EMS Support";
-  const fromEmail = process.env.BREVO_FROM_EMAIL;
   const displayName = employee?.name || "there";
   const adminName = admin?.fullname
     ? `${admin.fullname.firstname || ""} ${admin.fullname.lastname || ""}`.trim()
     : "Admin";
 
-  await axios.post("https://api.brevo.com/v3/smtp/email", {
-    sender: { name: fromName, email: fromEmail },
-    to: [{ email }],
+  await sendBrevoEmail({
+    to: { email: employee.email, name: displayName },
     subject: `Leave Request ${leave.status}`,
-    htmlContent: `
+    text: `
 Hello ${displayName},
 
 Your leave request has been ${leave.status.toLowerCase()} by ${adminName}.
@@ -281,36 +298,22 @@ Please log in to EMS to view more details.
   });
 };
 
-const sendTaskLinkSubmittedEmailToAdmin = async ({
-  adminEmails,
-  task,
-  employee,
-  link,
-  status,
-}) => {
-  const recipients = Array.isArray(adminEmails)
-    ? adminEmails.filter(Boolean)
-    : [adminEmails].filter(Boolean);
+const sendTaskLinkSubmittedEmailToAdmin = async ({ adminEmails, task, employee, link, status }) => {
+  const recipients = Array.isArray(adminEmails) ? adminEmails.filter(Boolean) : [adminEmails].filter(Boolean);
 
   if (!recipients.length) {
-    throw new Error(
-      "No admin email recipients found for task link notification",
-    );
+    throw new Error("No admin email recipients found for task link notification");
   }
 
-  const fromName = process.env.BREVO_FROM_NAME || "EMS Support";
-  const fromEmail = process.env.BREVO_FROM_EMAIL;
   const employeeName = employee?.name || "Employee";
   const employeeEmail = employee?.email || "N/A";
   const taskTitle = task?.title || "Task";
   const taskStatus = status || task?.status || "N/A";
 
-  await axios.post("https://api.brevo.com/v3/smtp/email", {
-    sender: { name: fromName, email: fromEmail },
-    to: [{ email }],
-
+  await sendBrevoEmail({
+    to: recipients,
     subject: `Work Link Submitted - ${employeeName}`,
-    htmlContent: `
+    text: `
 Hello Admin,
 
 An employee has submitted a work link.
